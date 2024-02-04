@@ -1,0 +1,2 @@
+django-ninja==1.1.0
+pip-chill==1.0.3
