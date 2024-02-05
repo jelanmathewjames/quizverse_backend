@@ -17,6 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from ninja import NinjaAPI
+
+api = NinjaAPI(title="Quizverse API", version="0.1.0")
+
+api.add_router("/auth/", "users.views.router", tags=["auth"])
+
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("api/v1/", api.urls),
 ]
