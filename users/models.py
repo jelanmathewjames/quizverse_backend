@@ -35,3 +35,13 @@ class Token(models.Model):
 
     class Meta: 
         db_table = "token"
+
+
+class VerificationToken(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    otp = models.CharField(max_length=6, unique=True)
+    user = models.OneToOneField("User", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta: 
+        db_table = "verification_token"
