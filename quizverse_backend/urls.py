@@ -22,7 +22,7 @@ from ninja import NinjaAPI
 api = NinjaAPI(title="Quizverse API", version="0.1.0")
 
 api.add_router("/auth/", "users.views.router", tags=["auth"])
-
+api.add_router("/quiz/", "quiz_viva.views.router", tags=["quiz"])
 urlpatterns = [
     path("api/v1/", api.urls),
 ]
