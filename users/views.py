@@ -1,7 +1,10 @@
 import secrets
 import re
+from datetime import datetime, timedelta
+
 from ninja import Router, Form
 from typing import Any, List
+from pydantic import EmailStr
 
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
@@ -10,7 +13,13 @@ from django.db.models import Q
 from users.models import *
 from users.schemas import *
 from quizverse_backend.settings import PASSWORD_REGEX, EMAIL_HOST_USER
-from utils.authentication import AuthBearer, role_required, verify_token, generate_access_token, generate_token
+from utils.authentication import (
+    AuthBearer,
+    role_required,
+    verify_token,
+    generate_access_token,
+    generate_token,
+)
 
 router = Router(auth=AuthBearer())
 
@@ -18,15 +27,17 @@ router = Router(auth=AuthBearer())
 def otp_generator(length):
     return secrets.randbelow(10**length)
 
+
 def verification_email(email):
     otp = otp_generator(6)
-    subject = 'Email Verification'
-    message = f'Your OTP is {otp}. Please verify your email.'
+    subject = "Email Verification"
+    message = f"Your OTP is {otp}. Please verify your email."
     from_email = EMAIL_HOST_USER
     recipient_list = [email]
 
     send_mail(subject, message, from_email, recipient_list)
     return otp
+
 
 @router.get("/user", response={200: UserOutSchema, 404: Any})
 def get_user(request):
@@ -60,7 +71,7 @@ def register(request, user: UserInSchema):
     user_data["password"] = make_password(user_data["password"])
     user = User.objects.create(**user_data)
     otp = verification_email(user.email)
-    VerificationToken.objects.create(user=user, otp=otp)
+    VerificationToken.objects.create(user=user, otp=otp, token_type="verify")
     return 201, user
 
 
@@ -68,8 +79,11 @@ def register(request, user: UserInSchema):
 def send_verification(request):
     user_id = request.auth.user_id
     user = User.objects.get(id=user_id)
+    if user.is_verified:
+        return 400, {"details": "Email already verified"}
+
     otp = verification_email(user.email)
-    VerificationToken.objects.update_or_create(user=user, defaults={"user":user, "otp": otp})
+    VerificationToken.objects.create(user=user, otp=otp, token_type="verify")
     return 200, {"details": "Verification email sent"}
 
 
@@ -78,34 +92,41 @@ def verify_otp(request, otp: int):
     user_id = request.auth.user_id
     user = User.objects.get(id=user_id)
     verification_token = VerificationToken.objects.get(user=user)
-    if otp == verification_token.otp:
-        user.is_verified = True
-        user.save()
-        return 200, {"details": "Email verified"}
-    return 400, {"details": "Invalid OTP"}
+    if datetime.now() > verification_token.created_at + timedelta(minutes=5):
+        return 400, {"details": "OTP expired"}
+    if verification_token.token_type != "verify":
+        return 400, {"details": "Invalid otp type"}
+    if otp != verification_token.otp:
+        return 400, {"details": "Invalid OTP"}
+
+    user.is_verified = True
+    user.save()
+    return 200, {"details": "Email verified"}
 
 
 @router.post("/login/", auth=None, response={200: TokenSchema, 400: Any})
 def login(request, login: LoginSchema):
     user_data = login.dict()
     user = User.objects.filter(
-        Q(username=user_data["username_or_email"]) | Q(email=user_data["username_or_email"])
+        Q(username=user_data["username_or_email"])
+        | Q(email=user_data["username_or_email"])
     ).first()
 
     if user and check_password(user_data["password"], user.password):
-        access_token, refresh_token = generate_token(user.id, [role.name for role in user.role.all()])
+        access_token, refresh_token = generate_token(
+            user.id, [role.name for role in user.role.all()]
+        )
         return 200, {"access_token": access_token, "refresh_token": refresh_token}
-    
+
     return 400, {"details": "Invalid credentials"}
+
 
 @router.post("/logout/", response={200: Any, 400: Any})
 def logout(request):
     data = request.auth
-    Token.objects.filter(
-        user_id=data["user_id"], access_token=data["token"]
-    ).delete()
+    Token.objects.filter(user_id=data["user_id"], access_token=data["token"]).delete()
     return 200, {"message": "Logout successful"}
-    
+
 
 @router.post("/get-access-token/", response={200: TokenSchema, 400: Any})
 def get_access_token(request, refresh_token: str = Form(...)):
@@ -130,3 +151,55 @@ def get_access_token(request, refresh_token: str = Form(...)):
             "code": 400,
             "details": {"error": str(e)},
         }
+
+
+@router.post("/reset-password/", response={200: Any, 400: Any, 500: Any})
+def reset_password(request, payload: ResetPasswordSchema):
+    user = User.objects.get(id=request.auth["user_id"])
+    if not check_password(payload.current_password, user.password):
+        return 400, {
+            "message": "Invalid current password",
+            "code": 400,
+            "details": {"current_password": ["Password is incorrect"]},
+        }
+    if check_password(payload.new_password, user.password):
+        return 400, {
+            "message": "Invalid new password",
+            "code": 400,
+            "details": {"new_password": ["New password must be different"]},
+        }
+    user.password = make_password(payload.new_password)
+    user.save()
+    return 200, {"message": "Reset password successful"}
+
+
+@router.post("/forgot-password/", auth=None, response={200: Any, 400: Any})
+def forgot_password(request, email: EmailStr = Form(...)):
+    user = User.objects.filter(email=email).first()
+    if user:
+        otp = otp_generator(6)
+        VerificationToken.objects.create(user=user, otp=otp, token_type="forgot")
+        subject = "Forgot Password"
+        message = f"Your OTP is {otp}. Please reset your password."
+        from_email = EMAIL_HOST_USER
+        recipient_list = [email]
+
+        send_mail(subject, message, from_email, recipient_list)
+        return 200, {"message": "Email sent"}
+    return 400, {"message": "Email not found"}
+
+
+@router.post("/forgot-password/{otp}/", auth=None, response={200: Any, 400: Any})
+def verify_forgot_otp(request, otp: int, new_password: str = Form(...)):
+    verification_token = VerificationToken.objects.get(otp=otp)
+    if datetime.now() > verification_token.created_at + timedelta(minutes=5):
+        return 400, {"details": "OTP expired"}
+    if verification_token.token_type != "forgot":
+        return 400, {"details": "Invalid otp type"}
+    if otp != verification_token.otp:
+        return 400, {"details": "Invalid OTP"}
+    
+    user = verification_token.user
+    user.password = make_password(new_password)
+    user.save()
+    return 200, {"message": "Password reset successful"}
