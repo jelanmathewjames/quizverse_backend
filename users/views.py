@@ -1,6 +1,5 @@
 import secrets
 import re
-from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 
 from ninja import Router, Form
@@ -27,9 +26,6 @@ router = Router(auth=AuthBearer())
 
 def otp_generator(length):
     return secrets.randbelow(10**length)
-
-def generate_key():
-    return str(Fernet.generate_key()).split("'")[1]
 
 def verification_email(email):
     otp = otp_generator(6)
@@ -204,7 +200,7 @@ def verify_forgot_otp(request, otp: int, new_password: str = Form(...)):
         return 400, {"details": "OTP expired"}
     if verification_token.token_type != "forgot":
         return 400, {"details": "Invalid otp type"}
-    token = generate_key()
+    token = secrets.token_urlsafe(40)
     ResetFormToken.objects.create(user=verification_token.user, token=token)
     verification_token.delete()
     
