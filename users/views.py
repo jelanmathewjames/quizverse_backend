@@ -1,5 +1,6 @@
 import secrets
 import re
+from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 
 from ninja import Router, Form
@@ -27,6 +28,8 @@ router = Router(auth=AuthBearer())
 def otp_generator(length):
     return secrets.randbelow(10**length)
 
+def generate_key():
+    return str(Fernet.generate_key()).split("'")[1]
 
 def verification_email(email):
     otp = otp_generator(6)
@@ -91,16 +94,18 @@ def send_verification(request):
 def verify_otp(request, otp: int):
     user_id = request.auth.user_id
     user = User.objects.get(id=user_id)
-    verification_token = VerificationToken.objects.get(user=user)
+    try:
+        verification_token = VerificationToken.objects.get(user=user)
+    except VerificationToken.DoesNotExist:
+        return 400, {"details": "No otp found"}
     if datetime.now() > verification_token.created_at + timedelta(minutes=5):
         return 400, {"details": "OTP expired"}
     if verification_token.token_type != "verify":
         return 400, {"details": "Invalid otp type"}
-    if otp != verification_token.otp:
-        return 400, {"details": "Invalid OTP"}
 
     user.is_verified = True
     user.save()
+    verification_token.delete()
     return 200, {"details": "Email verified"}
 
 
@@ -191,15 +196,30 @@ def forgot_password(request, email: EmailStr = Form(...)):
 
 @router.post("/forgot-password/{otp}/", auth=None, response={200: Any, 400: Any})
 def verify_forgot_otp(request, otp: int, new_password: str = Form(...)):
-    verification_token = VerificationToken.objects.get(otp=otp)
-    if datetime.now() > verification_token.created_at + timedelta(minutes=5):
+    try:
+        verification_token = VerificationToken.objects.get(otp=otp)
+    except VerificationToken.DoesNotExist:
+        return 400, {"details": "Invalid token"}
+    if datetime.now() > verification_token.created_at + timedelta(minutes=2):
         return 400, {"details": "OTP expired"}
     if verification_token.token_type != "forgot":
         return 400, {"details": "Invalid otp type"}
-    if otp != verification_token.otp:
-        return 400, {"details": "Invalid OTP"}
+    token = generate_key()
+    ResetFormToken.objects.create(user=verification_token.user, token=token)
+    verification_token.delete()
     
-    user = verification_token.user
+    return 200, {"message": "OTP verified successfully", "token": token}
+
+@router.post("/reset-forgot-password/{token}/", auth=None, response={200: Any, 400: Any})
+def reset_forgot_password(request, token: str, new_password: str = Form(...)):
+    try:
+        reset_token = ResetFormToken.objects.get(token=token)
+    except ResetFormToken.DoesNotExist:
+        return 400, {"details": "Invalid token"}
+    if datetime.now() > reset_token.created_at + timedelta(minutes=10):
+        return 400, {"details": "OTP expired"}
+    user = reset_token.user
     user.password = make_password(new_password)
     user.save()
+    reset_token.delete()
     return 200, {"message": "Password reset successful"}

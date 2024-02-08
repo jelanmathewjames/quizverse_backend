@@ -47,3 +47,9 @@ class VerificationToken(models.Model):
 
     class Meta:
         db_table = "verification_token"
+
+class ResetFormToken(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    token = models.CharField(max_length=36, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
