@@ -12,7 +12,7 @@ class UserOutSchema(ModelSchema):
 
     class Meta:
         model = User
-        fields = "__all__"
+        exclude = ["password"]
 
 
 class UserInSchema(Schema):

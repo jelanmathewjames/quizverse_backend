@@ -61,12 +61,12 @@ def register(request, user: UserInSchema):
     for field in unique_fields:
         if User.objects.filter(**{field: user_data[field]}).exists():
             return 400, {"details": f"{field} already exists"}
-    if not re.match(PASSWORD_REGEX, user_data["password"]):
-        return 400, {
-            "details": """Password is weak and must contain 
-            at least 8 characters, 1 uppercase, 1 lowercase, 
-            1 number and 1 special character"""
-        }
+    # if not re.match(PASSWORD_REGEX, user_data["password"]):
+    #     return 400, {
+    #         "details": """Password is weak and must contain 
+    #         at least 8 characters, 1 uppercase, 1 lowercase, 
+    #         1 number and 1 special character"""
+    #     }
     user_data["password"] = make_password(user_data["password"])
     user = User.objects.create(**user_data)
     otp = verification_email(user.email)
