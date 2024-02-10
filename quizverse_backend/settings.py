@@ -71,13 +71,13 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "quizverse_backend.wsgi.application"
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+WSGI_APPLICATION = "quizverse_backend.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
