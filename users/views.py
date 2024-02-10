@@ -54,7 +54,7 @@ def get_users(request):
     return 201, users
 
 
-@router.post("/register/", response={201: UserOutSchema, 400: Any})
+@router.post("/register/", auth=None, response={201: UserOutSchema, 400: Any})
 def register(request, user: UserInSchema):
     unique_fields = ["username", "email"]
     user_data = user.dict()
