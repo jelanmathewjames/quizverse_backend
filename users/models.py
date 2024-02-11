@@ -40,16 +40,10 @@ class Token(models.Model):
 class VerificationToken(models.Model):
     TOKEN_TYPES = [("verify", "verify"), ("forgot", "forgot")]
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    otp = models.CharField(max_length=6, unique=True)
+    token = models.CharField(max_length=40, unique=True)
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     token_type = models.CharField(max_length=7, choices=TOKEN_TYPES)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "verification_token"
-
-class ResetFormToken(models.Model):
-    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    user = models.ForeignKey("User", on_delete=models.CASCADE)
-    token = models.CharField(max_length=36, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)

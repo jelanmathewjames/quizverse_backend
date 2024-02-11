@@ -131,6 +131,8 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+FRONTEND_URL = config("FRONTEND_URL")
+
 PASSWORD_REGEX = config("PASSWORD_REGEX")
 
 JWT_ALGORITHM = config("JWT_ALGORITHM")
