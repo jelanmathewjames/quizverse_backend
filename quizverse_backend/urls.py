@@ -23,6 +23,7 @@ api = NinjaAPI(title="Quizverse API", version="0.1.0")
 
 api.add_router("/auth/", "users.views.router", tags=["auth"])
 api.add_router("/quiz/", "quiz_viva.views.router", tags=["quiz"])
+api.add_router("/admin/", "admin.views.router", tags=["admin"])
 urlpatterns = [
     path("api/v1/", api.urls),
 ]

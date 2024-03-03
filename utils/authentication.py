@@ -44,9 +44,9 @@ def generate_access_token(user_id, role):
     access_exp_time = datetime.utcnow() + timedelta(hours=1)
     # Create the payload containing the user ID and expiration time
     access_payload = {
-        "user_id": user_id,
+        "user": user_id,
         "exp": access_exp_time,
-        "role": role,
+        "roles": role,
         "tokenType": "access",
     }
     # Generate the token using the secret key

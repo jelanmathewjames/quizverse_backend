@@ -6,6 +6,7 @@ class UserRoles(Enum):
     COMMUNITY = "Community"
     FACULTY = "Faculty"
     STUDENT = "Student"
+    COMMUNITYMEMBER = "CommunityMember"
 
     @classmethod
     def get_roles(cls):
