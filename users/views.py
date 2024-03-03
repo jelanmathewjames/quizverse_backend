@@ -9,6 +9,7 @@ from pydantic import EmailStr
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import Q
+from django.http import JsonResponse
 
 from users.models import *
 from users.schemas import *
@@ -86,7 +87,9 @@ def send_verification(request):
 @router.post("/verify/{token}/", response={200: Any, 400: Any})
 def verify_email(request, token: str):
     try:
-        verification_token = VerificationToken.objects.get(token=token, token_type="verify")
+        verification_token = VerificationToken.objects.get(
+            token=token, token_type="verify"
+        )
     except VerificationToken.DoesNotExist:
         return 400, {"details": "Invalid Link"}
     if datetime.now() > verification_token.created_at + timedelta(minutes=5):
@@ -98,7 +101,7 @@ def verify_email(request, token: str):
     return 200, {"details": "Email verified"}
 
 
-@router.post("/login/", auth=None, response={200: TokenSchema, 400: Any})
+@router.post("/login/", auth=None, response={400: Any})
 def login(request, login: LoginSchema):
     user_data = login.dict()
     user = User.objects.filter(
@@ -110,7 +113,12 @@ def login(request, login: LoginSchema):
         access_token, refresh_token = generate_token(
             user.id, [role.name for role in user.role.all()]
         )
-        return 200, {"access_token": access_token, "refresh_token": refresh_token}
+        Token.objects.create(
+            user_id=user.id, access_token=access_token, refresh_token=refresh_token
+        )
+        response = JsonResponse(data={"access_token": access_token}, status=200)
+        response.set_cookie("refresh_token", refresh_token, httponly=True)
+        return response
 
     return 400, {"details": "Invalid credentials"}
 
@@ -122,9 +130,10 @@ def logout(request):
     return 200, {"message": "Logout successful"}
 
 
-@router.post("/get-access-token/", response={200: TokenSchema, 400: Any})
-def get_access_token(request, refresh_token: str = Form(...)):
+@router.post("/get-access-token/", auth=None, response={200: TokenSchema, 400: Any})
+def get_access_token(request):
     try:
+        refresh_token = request.COOKIES.get("refresh_token")
         payload = verify_token(refresh_token, "refresh")
         if payload is None:
             return 400, {
@@ -138,7 +147,7 @@ def get_access_token(request, refresh_token: str = Form(...)):
         Token.objects.filter(user_id=user_id, refresh_token=refresh_token).update(
             access_token=access_token
         )
-        return 200, {"access_token": access_token, "refresh_token": refresh_token}
+        return 200, {"access_token": access_token}
     except Exception as e:
         return 400, {
             "message": "Invalid token",
@@ -186,7 +195,9 @@ def forgot_password(request, email: EmailStr = Form(...)):
 @router.post("/forgot-password/{token}/", auth=None, response={200: Any, 400: Any})
 def verify_forgot_otp(request, token: str, new_password: str = Form(None)):
     try:
-        verification_token = VerificationToken.objects.get(token=token, token_type="forgot")
+        verification_token = VerificationToken.objects.get(
+            token=token, token_type="forgot"
+        )
     except VerificationToken.DoesNotExist:
         return 400, {"details": "Invalid link"}
     if datetime.now() > verification_token.created_at + timedelta(minutes=2):

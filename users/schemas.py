@@ -28,7 +28,6 @@ class LoginSchema(Schema):
 
 class TokenSchema(Schema):
     access_token: str
-    refresh_token: str
 
 
 class ResetPasswordSchema(Schema):
