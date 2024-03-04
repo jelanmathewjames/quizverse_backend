@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import Q
 from django.http import JsonResponse
+from django.template.loader import get_template
 
 from users.models import *
 from users.schemas import *
@@ -28,11 +29,19 @@ router = Router(auth=AuthBearer())
 def verification_email(email):
     token = secrets.token_urlsafe(40)
     subject = "Email Verification"
-    message = f"Your verifcation link is {FRONTEND_URL}/verify/{token}. Please verify your email."
+    email_template = get_template('resetPassword.html')
+    context = {'verification_link': f"{FRONTEND_URL}/verify/{token}"}
+    email_str = email_template.render(context)
     from_email = EMAIL_HOST_USER
     recipient_list = [email]
 
-    send_mail(subject, message, from_email, recipient_list)
+    send_mail(
+        subject, 
+        message='', 
+        html_message=email_str, 
+        from_email=from_email, 
+        recipient_list=recipient_list
+    )
     return token
 
 
