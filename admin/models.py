@@ -59,7 +59,6 @@ class Faculty(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
     faculty_id = models.CharField(max_length=100)
     user = models.OneToOneField("users.User", on_delete=models.CASCADE)
-    institution = models.ForeignKey("Institution", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -72,7 +71,6 @@ class Student(models.Model):
     roll_number = models.CharField(max_length=100)
     class_or_semester = models.IntegerField()
     user = models.OneToOneField("users.User", on_delete=models.CASCADE)
-    institution = models.ForeignKey("Institution", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
