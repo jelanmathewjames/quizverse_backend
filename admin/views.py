@@ -15,7 +15,7 @@ router = Router()
 @role_required(["Admin"])
 def give_institution_role(request, data: GiveRolesSchema):
     if len(data.user_ids) != 1:
-        return {"message": "Only one user can be given institution role"}
+        return 400, {"message": "Only one user can be given institution role"}
 
     user = get_object_or_404(User, id=data.user_ids[0])
     institution = get_object_or_404(Institution, id=data.entity_id)
@@ -38,7 +38,7 @@ def give_institution_role(request, data: GiveRolesSchema):
 @role_required(["Admin"])
 def give_community_role(request, data: GiveRolesSchema):
     if len(data.user_ids) != 1:
-        return {"message": "Only one user can be given community role"}
+        return 400, {"message": "Only one user can be given community role"}
     
     user = get_object_or_404(User, id=data.user_ids[0])
     community = get_object_or_404(Community, id=data.entity_id)
@@ -54,7 +54,7 @@ def give_community_role(request, data: GiveRolesSchema):
     UserCommunityLink.objects.create(
         user=user, community=community
     )
-    return {"message": "Community role given"}
+    return 200, {"message": "Community role given"}
 
 
 @router.post("/faculty/", response={200: Any, 400: Any})
@@ -84,7 +84,7 @@ def give_student_role(request, data: GiveRolesSchema):
         UserInstitutionLink.objects.create(
             user=user, institution=institution
         )
-    return {"message": "Student role given"}
+    return 200, {"message": "Student role given"}
 
 
 @router.post("/community-member/", response={200: Any, 400: Any})
@@ -99,4 +99,4 @@ def give_community_member_role(request, data: GiveRolesSchema):
         UserCommunityLink.objects.create(
             user=user, community=community
         )
-    return {"message": "Community Member role given"}
+    return 200, {"message": "Community Member role given"}

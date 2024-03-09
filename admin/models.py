@@ -13,12 +13,24 @@ class Institution(models.Model):
     name = models.CharField(max_length=100)
     place = models.CharField(max_length=100)
     instituion_type = models.CharField(max_length=7, choices=TYPE_CHOICES)
-    education_system = models.CharField(max_length=100)
+    education_system = models.ForeignKey(
+        "EducationSystem", on_delete=models.SET_NULL, null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "institution"
+
+
+class EducationSystem(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "education_system"
 
 
 class Community(models.Model):
@@ -103,10 +115,38 @@ class StudentDepartmentLink(models.Model):
 class Course(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
     name = models.CharField(max_length=100)
-    code = models.CharField(max_length=100)
-    handling_faculty = models.ManyToManyField("Faculty")
+    code = models.CharField(max_length=10)
+    education_system = models.ForeignKey(
+        "EducationSystem", on_delete=models.SET_NULL, null=True
+    )
+    class_or_semester = models.IntegerField()
+    department = models.ForeignKey("Department", on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "course"
+
+
+class CourseFacultyLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    faculty = models.ForeignKey("Faculty", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "course_faculty_link"
+
+
+class Module(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    module_number = models.IntegerField()
+    module_name = models.CharField(max_length=100)
+    syllabus = models.TextField()
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "module"
