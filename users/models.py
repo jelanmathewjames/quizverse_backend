@@ -4,7 +4,7 @@ from django.db import models
 
 class User(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    username = models.EmailField(max_length=256, unique=True)
+    username = models.EmailField(max_length=50, unique=True)
     email = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=150)
     role = models.ManyToManyField("Role")
@@ -24,6 +24,36 @@ class Role(models.Model):
 
     class Meta:
         db_table = "role"
+
+
+class UserInstitutionLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="user_institution_link"
+    )
+    institution = models.ForeignKey(
+        "admin.Institution", on_delete=models.CASCADE, related_name="institution_user_link"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "user_institution_link"
+
+
+class UserCommunityLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="user_community_link"
+    )
+    community = models.ForeignKey(
+        "admin.Community", on_delete=models.CASCADE, related_name="community_user_link"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "user_community_link"
 
 
 class Token(models.Model):
