@@ -139,7 +139,7 @@ def logout(request):
     return 200, {"message": "Logout successful"}
 
 
-@router.post("/get-access-token/", auth=None, response={200: TokenSchema, 400: Any})
+@router.post("/refresh/", auth=None, response={200: TokenSchema, 400: Any})
 def get_access_token(request):
     try:
         refresh_token = request.COOKIES.get("refresh_token")
