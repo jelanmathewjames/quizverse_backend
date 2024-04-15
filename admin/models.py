@@ -10,7 +10,7 @@ class Institution(models.Model):
     ]
 
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     place = models.CharField(max_length=100)
     instituion_type = models.CharField(max_length=7, choices=TYPE_CHOICES)
     education_system = models.ForeignKey(
@@ -25,7 +25,7 @@ class Institution(models.Model):
 
 class EducationSystem(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,7 +47,7 @@ class Community(models.Model):
     ]
 
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     level = models.CharField(max_length=100)
     community_type = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -59,7 +59,7 @@ class Community(models.Model):
 
 class Department(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
