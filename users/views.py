@@ -217,3 +217,9 @@ def verify_forgot_otp(request, token: str, new_password: str = Form(None)):
         user.save()
         return 200, {"message": "Password reset successfully"}
     return 200, {"details": "Valid link"}
+
+
+@router.post("/accept-role/", response={200: Any, 400: Any})
+def accept_role(request, role: str = Form(...)):
+    user = User.objects.get(id=request.auth.user_id)
+    return 200, {"message": "Role accepted"}

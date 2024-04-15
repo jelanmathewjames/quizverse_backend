@@ -34,11 +34,18 @@ class UserInstitutionLink(models.Model):
     institution = models.ForeignKey(
         "admin.Institution", on_delete=models.CASCADE, related_name="institution_user_link"
     )
+    role = models.ForeignKey("Role", on_delete=models.SET_NULL, null=True)
+    accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "user_institution_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "institution"], name="unique_user_institution"
+            )
+        ]
 
 
 class UserCommunityLink(models.Model):
@@ -49,11 +56,18 @@ class UserCommunityLink(models.Model):
     community = models.ForeignKey(
         "admin.Community", on_delete=models.CASCADE, related_name="community_user_link"
     )
+    role = models.ForeignKey("Role", on_delete=models.SET_NULL, null=True)
+    accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "user_community_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "community"], name="unique_user_community"
+            )
+        ]
 
 
 class Token(models.Model):
