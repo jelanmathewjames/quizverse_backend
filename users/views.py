@@ -222,15 +222,23 @@ def verify_forgot_otp(request, token: str, new_password: str = Form(None)):
 @router.get("/role-requests", response={200: List[RoleRequests]})
 def get_role_request(request):
     user_institution = list(
-        UserInstitutionLink.objects.annotate(entity="Institution")
-        .filter(user_id=request.auth.user_id, accepted=False)
-        .values_list("entity", "institution__name", "role__name")
+        UserInstitutionLink.objects.filter(
+            user_id=request.auth.user_id, accepted=False
+        ).values_list("institution__name", "role__name")
     )
     user_community = list(
-        UserCommunityLink.objects.annotate(entity="Community")
-        .filter(user_id=request.auth.user_id, accepted=False)
-        .values_list("entity", "community__name", "role__name")
+        UserCommunityLink.objects.filter(
+            user_id=request.auth.user_id, accepted=False
+        ).values_list("community__name", "role__name")
     )
+    user_institution = [
+        {"entity": "Institution", "entity_name": x[0], "role": x[1]}
+        for x in user_institution
+    ]
+    user_community = [
+        {"entity": "Community", "entity_name": x[0], "role": x[1]}
+        for x in user_community
+    ]
     return 200, user_institution + user_community
 
 
