@@ -11,11 +11,45 @@ class QuizOrViva(models.Model):
     description = models.CharField(max_length=500)
     viva_or_quiz = models.CharField(max_length=4, choices=TYPE_CHOICES)
     conductor = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    is_private = models.BooleanField(default=False)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    duration = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "quiz_or_viva"
+
+class StudentQuizOrVivaLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    student = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    quiz_or_viva = models.ForeignKey("QuizOrViva", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "student_quiz_or_viva_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "quiz_or_viva"], name="unique_student_quiz_or_viva"
+            )
+        ]
+
+class CommunityMemberQuizOrVivaLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    community_member = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    quiz_or_viva = models.ForeignKey("QuizOrViva", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "community_member_quiz_or_viva_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["community_member", "quiz_or_viva"], name="unique_community_member_quiz_or_viva"
+            )
+        ]
 
 
 class QuestionBank(models.Model):
@@ -52,7 +86,7 @@ class Question(models.Model):
     question_number = models.IntegerField()
     question = models.CharField(max_length=500)
     question_type = models.CharField(max_length=6, choices=TYPE_CHOICES)
-    viva_or_quiz = models.ForeignKey("QuizOrViva", on_delete=models.CASCADE)
+    qbank = models.ForeignKey("QuestionBank", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

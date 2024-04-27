@@ -117,10 +117,10 @@ class Course(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=10)
     education_system = models.ForeignKey(
-        "EducationSystem", on_delete=models.SET_NULL, null=True
+        "EducationSystem", on_delete=models.CASCADE, null=True
     )
     class_or_semester = models.IntegerField()
-    department = models.ForeignKey("Department", on_delete=models.SET_NULL, null=True)
+    department = models.ForeignKey("Department", on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
