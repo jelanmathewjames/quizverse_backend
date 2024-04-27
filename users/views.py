@@ -29,18 +29,18 @@ router = Router(auth=AuthBearer())
 def verification_email(email):
     token = secrets.token_urlsafe(40)
     subject = "Email Verification"
-    email_template = get_template('resetPassword.html')
-    context = {'verification_link': f"{FRONTEND_URL}/verify/{token}"}
+    email_template = get_template("resetPassword.html")
+    context = {"verification_link": f"{FRONTEND_URL}/verify/{token}"}
     email_str = email_template.render(context)
     from_email = EMAIL_HOST_USER
     recipient_list = [email]
 
     send_mail(
-        subject, 
-        message='', 
-        html_message=email_str, 
-        from_email=from_email, 
-        recipient_list=recipient_list
+        subject,
+        message="",
+        html_message=email_str,
+        from_email=from_email,
+        recipient_list=recipient_list,
     )
     return token
 
@@ -219,7 +219,39 @@ def verify_forgot_otp(request, token: str, new_password: str = Form(None)):
     return 200, {"details": "Valid link"}
 
 
+@router.get("/role-requests", response={200: List[RoleRequests]})
+def get_role_request(request):
+    user_institution = list(
+        UserInstitutionLink.objects.annotate(entity="Institution")
+        .filter(user_id=request.auth.user_id, accepted=False)
+        .values_list("entity", "institution__name", "role__name")
+    )
+    user_community = list(
+        UserCommunityLink.objects.annotate(entity="Community")
+        .filter(user_id=request.auth.user_id, accepted=False)
+        .values_list("entity", "community__name", "role__name")
+    )
+    return 200, user_institution + user_community
+
+
 @router.post("/accept-role/", response={200: Any, 400: Any})
-def accept_role(request, role: str = Form(...)):
-    user = User.objects.get(id=request.auth.user_id)
+def accept_role(request, role: str, entity: str, entity_name: str):
+    if entity == "Institution":
+        user_institution = UserInstitutionLink.objects.get(
+            user_id=request.auth.user_id,
+            institution__name=entity_name,
+            role__name=role,
+            accepted=False,
+        )
+        user_institution.accepted = True
+        user_institution.save()
+    elif entity == "Community":
+        user_community = UserCommunityLink.objects.get(
+            user_id=request.auth.user_id,
+            community__name=entity_name,
+            role__name=role,
+            accepted=False,
+        )
+        user_community.accepted = True
+        user_community.save()
     return 200, {"message": "Role accepted"}

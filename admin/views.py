@@ -29,7 +29,7 @@ def give_institution_role(request, data: GiveRolesSchema):
     role = Role.objects.get(name="Institution")
     user.roles.add(role)
     UserInstitutionLink.objects.create(
-        user=user, institution=institution
+        user=user, institution=institution, role=role
     )
     return 200, {"message": "Institution role given"}
 
@@ -52,7 +52,7 @@ def give_community_role(request, data: GiveRolesSchema):
     role = Role.objects.get(name="Community")
     user.roles.add(role)
     UserCommunityLink.objects.create(
-        user=user, community=community
+        user=user, community=community, role=role
     )
     return 200, {"message": "Community role given"}
 
@@ -67,7 +67,7 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
         user = User.objects.get(id=datas['user_id'])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
-            user=user, institution=institution
+            user=user, institution=institution, role=role
         )
         faculty = Faculty.objects.create(facutly_id=datas['member_id'], user=user)
         FacultyDepartmentLink.objects.create(faculty=faculty, department=department)
@@ -84,7 +84,7 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
         user = User.objects.get(id=datas['user_id'])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
-            user=user, institution=institution
+            user=user, institution=institution, role=role
         )
         student = Student.objects.create(
             roll_number=datas['member_id'], 
@@ -105,7 +105,7 @@ def give_community_member_role(request, data: GiveRolesSchema):
     for user in users:
         user.roles.add(role)
         UserCommunityLink.objects.create(
-            user=user, community=community
+            user=user, community=community, role=role
         )
     return 200, {"message": "Community Member role given"}
 

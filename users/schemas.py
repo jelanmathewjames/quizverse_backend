@@ -33,3 +33,9 @@ class TokenSchema(Schema):
 class ResetPasswordSchema(Schema):
     current_password: str
     new_password: str
+
+
+class RoleRequests(Schema):
+    entity: str
+    entity_name: str
+    role: str
