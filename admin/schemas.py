@@ -8,10 +8,10 @@ from admin.models import *
 class UserMembershipIDSchema(Schema):
     member_id: str
     user_id: str
+    department_ids: List[str]
 
 class GiveRolesMembershipSchema(Schema):
     entity_id: str
-    department_id: str
     user_membership_id: List[UserMembershipIDSchema]
     class_or_semester: Union[int, None]
 

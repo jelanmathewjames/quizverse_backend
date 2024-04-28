@@ -2,6 +2,7 @@ from ninja import Router
 from typing import Any
 
 from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 
 from utils.authentication import role_required
 from admin.schemas import *
@@ -61,16 +62,17 @@ def give_community_role(request, data: GiveRolesSchema):
 @role_required(["Institution"])
 def give_faculty_role(request, data: GiveRolesMembershipSchema):
     institution = get_object_or_404(Institution, id=data.entity_id)
-    department = get_object_or_404(Department, id=data.department_id)
     role = Role.objects.get(name="Faculty")
     for datas in data.user_membership_id:
+        departments = Department.objects.filter(id__in=datas["department_ids"])
         user = User.objects.get(id=datas['user_id'])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
             user=user, institution=institution, role=role
         )
         faculty = Faculty.objects.create(facutly_id=datas['member_id'], user=user)
-        FacultyDepartmentLink.objects.create(faculty=faculty, department=department)
+        for department in departments:
+            FacultyDepartmentLink.objects.create(faculty=faculty, department=department)
     return 200, {"message": "Faculty role given"}
 
 
@@ -78,9 +80,9 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
 @role_required(["Institution"])
 def give_student_role(request, data: GiveRolesMembershipSchema):
     institution = get_object_or_404(Institution, id=data.entity_id)
-    department = get_object_or_404(Department, id=data.department_id)
     role = Role.objects.get(name="Student")
     for datas in data.user_membership_ids:
+        departments = Department.objects.filter(id__in=datas["department_ids"])
         user = User.objects.get(id=datas['user_id'])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
@@ -91,7 +93,8 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
             user=user,
             class_or_semester=data['class_or_semester']
         )
-        StudentDepartmentLink.objects.create(student=student, department=department)
+        for department in departments:
+            StudentDepartmentLink.objects.create(student=student, department=department)
     return 200, {"message": "Student role given"}
 
 
@@ -147,3 +150,37 @@ def create_department(request, name: str):
     
     department = Department.objects.create(name=name)
     return 200, department
+
+@router.get("/education-system/", response={200: List[EducationSystemOutSchema]})
+@role_required(["Admin"])
+def get_education_system(request):
+    education_system = EducationSystem.objects.all()
+    return 200, education_system
+
+@router.get("/institution", response={200: List[InstitutionOutSchema]})
+@role_required(["Admin"])
+def get_institution(request):
+    institution = Institution.objects.all()
+    return 200, institution
+
+@router.get("/community", response={200: List[CommunityOutSchema]})
+@role_required(["Admin"])
+def get_community(request):
+    community = Community.objects.all()
+    return 200, community
+
+@router.get("/department", response={200: List[CommunityOutSchema]})
+@role_required(["Admin", "Institution", "Faculty"])
+def get_community(request):
+    department = Department.objects.all()
+    if "Faculty" in request.auth.role:
+        faculty_instance = Faculty.objects.filter(user_id="123").first()
+        department = Department.objects.prefetch_related(
+            Prefetch(
+                'faculty_department_link',
+                queryset=FacultyDepartmentLink.objects.filter(faculty=faculty_instance),
+                to_attr='handled_by_faculty'
+            )
+        )
+    return 200, department
+
