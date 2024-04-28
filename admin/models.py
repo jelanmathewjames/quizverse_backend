@@ -120,12 +120,27 @@ class Course(models.Model):
         "EducationSystem", on_delete=models.CASCADE, null=True
     )
     class_or_semester = models.IntegerField()
-    department = models.ForeignKey("Department", on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "course"
+
+
+class CourseDepartmentLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    department = models.ForeignKey("Department", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "course_department_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course", "department"], name="unique_course_department_link"
+            )
+        ]
 
 
 class CourseFacultyLink(models.Model):

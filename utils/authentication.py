@@ -41,7 +41,7 @@ class AuthBearer(HttpBearer):
 # Function to generate a JWT token
 def generate_access_token(user_id, role):
     # Set the expiration time for the token (e.g., 1 hour from now)
-    access_exp_time = datetime.utcnow() + timedelta(hours=1)
+    access_exp_time = datetime.now() + timedelta(hours=1)
     # Create the payload containing the user ID and expiration time
     access_payload = {
         "user": user_id,
@@ -56,10 +56,10 @@ def generate_access_token(user_id, role):
 
 def generate_token(user_id, role):
     access_token = generate_access_token(user_id, role)
-    refresh_exp_time = datetime.utcnow() + timedelta(days=7)
+    refresh_exp_time = datetime.now() + timedelta(days=7)
     # Create the payload containing the user ID and expiration time
     refresh_payload = {
-        "user_id": user_id,
+        "user": user_id,
         "exp": refresh_exp_time,
         "role": role,
         "tokenType": "refresh",
