@@ -132,11 +132,13 @@ def login(request, login: LoginSchema):
     return 400, {"details": "Invalid credentials"}
 
 
-@router.post("/logout/", response={200: Any, 400: Any})
+@router.post("/logout/", response={400: Any})
 def logout(request):
     data = request.auth
     Token.objects.filter(user_id=data["user_id"], access_token=data["token"]).delete()
-    return 200, {"message": "Logout successful"}
+    response = JsonResponse(data={"message": "Logout successful"}, status=200)
+    response.delete_cookie("refresh_token")
+    return response
 
 
 @router.post("/refresh/", auth=None, response={200: TokenSchema, 400: Any})
