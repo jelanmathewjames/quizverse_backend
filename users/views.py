@@ -135,7 +135,8 @@ def login(request, login: LoginSchema):
 @router.post("/logout/", response={400: Any})
 def logout(request):
     data = request.auth
-    Token.objects.filter(user_id=data["user_id"], access_token=data["token"]).delete()
+    refresh_token = request.COOKIES.get("refresh_token")
+    Token.objects.filter(user_id=data["user_id"], refresh_token=refresh_token).delete()
     response = JsonResponse(data={"message": "Logout successful"}, status=200)
     response.delete_cookie("refresh_token")
     return response
