@@ -142,6 +142,36 @@ class CourseDepartmentLink(models.Model):
             )
         ]
 
+class InstitutionCourseLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    institution = models.ForeignKey("Institution", on_delete=models.CASCADE)
+    course = models.ForeignKey("Course", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "institution_course_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["institution", "course"], name="unique_institution_course_link"
+            )
+        ]
+
+class InstitutionDepartmentLink(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    institution = models.ForeignKey("Institution", on_delete=models.CASCADE)
+    department = models.ForeignKey("Department", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "institution_department_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["institution", "department"], name="unique_institution_department_link"
+            )
+        ]
+
 
 class CourseFacultyLink(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)

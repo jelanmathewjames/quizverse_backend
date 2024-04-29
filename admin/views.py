@@ -3,6 +3,7 @@ from typing import Any
 
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
+from django.db import IntegrityError
 
 from utils.authentication import role_required
 from admin.schemas import *
@@ -29,9 +30,7 @@ def give_institution_role(request, data: GiveRolesSchema):
 
     role = Role.objects.get(name="Institution")
     user.roles.add(role)
-    UserInstitutionLink.objects.create(
-        user=user, institution=institution, role=role
-    )
+    UserInstitutionLink.objects.create(user=user, institution=institution, role=role)
     return 200, {"message": "Institution role given"}
 
 
@@ -40,7 +39,7 @@ def give_institution_role(request, data: GiveRolesSchema):
 def give_community_role(request, data: GiveRolesSchema):
     if len(data.user_ids) != 1:
         return 400, {"message": "Only one user can be given community role"}
-    
+
     user = get_object_or_404(User, id=data.user_ids[0])
     community = get_object_or_404(Community, id=data.entity_id)
 
@@ -52,9 +51,7 @@ def give_community_role(request, data: GiveRolesSchema):
 
     role = Role.objects.get(name="Community")
     user.roles.add(role)
-    UserCommunityLink.objects.create(
-        user=user, community=community, role=role
-    )
+    UserCommunityLink.objects.create(user=user, community=community, role=role)
     return 200, {"message": "Community role given"}
 
 
@@ -65,12 +62,12 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
     role = Role.objects.get(name="Faculty")
     for datas in data.user_membership_id:
         departments = Department.objects.filter(id__in=datas["department_ids"])
-        user = User.objects.get(id=datas['user_id'])
+        user = User.objects.get(id=datas["user_id"])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
             user=user, institution=institution, role=role
         )
-        faculty = Faculty.objects.create(facutly_id=datas['member_id'], user=user)
+        faculty = Faculty.objects.create(facutly_id=datas["member_id"], user=user)
         for department in departments:
             FacultyDepartmentLink.objects.create(faculty=faculty, department=department)
     return 200, {"message": "Faculty role given"}
@@ -83,15 +80,15 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
     role = Role.objects.get(name="Student")
     for datas in data.user_membership_ids:
         departments = Department.objects.filter(id__in=datas["department_ids"])
-        user = User.objects.get(id=datas['user_id'])
+        user = User.objects.get(id=datas["user_id"])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
             user=user, institution=institution, role=role
         )
         student = Student.objects.create(
-            roll_number=datas['member_id'], 
+            roll_number=datas["member_id"],
             user=user,
-            class_or_semester=data['class_or_semester']
+            class_or_semester=data["class_or_semester"],
         )
         for department in departments:
             StudentDepartmentLink.objects.create(student=student, department=department)
@@ -107,49 +104,77 @@ def give_community_member_role(request, data: GiveRolesSchema):
     role = Role.objects.get(name="CommunityMember")
     for user in users:
         user.roles.add(role)
-        UserCommunityLink.objects.create(
-            user=user, community=community, role=role
-        )
+        UserCommunityLink.objects.create(user=user, community=community, role=role)
     return 200, {"message": "Community Member role given"}
+
 
 @router.post("/education-system/", response={200: EducationSystemOutSchema, 400: Any})
 @role_required(["Admin"])
 def create_education_system(request, name: str):
     if EducationSystem.objects.filter(name=name).exists():
         return 400, {"message": "Education system with this name already exist"}
-    
+
     education_system = EducationSystem.objects.create(name=name)
     return 200, education_system
+
 
 @router.post("/institution/", response={200: InstitutionOutSchema, 400: Any})
 @role_required(["Admin"])
 def create_institution(request, data: InstitutionInSchema):
     data = data.dict()
-    get_object_or_404(EducationSystem, id=data['education_system_id'])
-    if Institution.objects.filter(name=data['name']).exists():
+    get_object_or_404(EducationSystem, id=data["education_system_id"])
+    if Institution.objects.filter(name=data["name"]).exists():
         return 400, {"message": "Institution with this name already exist"}
-    
+
     institution = Institution.objects.create(**data)
     return 200, institution
+
 
 @router.post("/community/", response={200: CommunityOutSchema, 400: Any})
 @role_required(["Admin"])
 def create_institution(request, data: CommunityInSchema):
     data = data.dict()
-    if Community.objects.filter(name=data['name']).exists():
+    if Community.objects.filter(name=data["name"]).exists():
         return 400, {"message": "Community with this name already exist"}
-    
+
     community = Community.objects.create(**data)
     return 200, community
+
 
 @router.post("/department/", response={200: DepartmentOutSchema, 400: Any})
 @role_required(["Admin"])
 def create_department(request, name: str):
     if Department.objects.filter(name=name).exists():
         return 400, {"message": "Department with this name already exist"}
-    
+
     department = Department.objects.create(name=name)
     return 200, department
+
+@router.post("/link/institution-department/", response={200: Any, 400: Any})
+@role_required(["Institution"])
+def link_institution_department(request, institution_id: str, department_id: str):
+    institution = get_object_or_404(Institution, id=institution_id)
+    department = get_object_or_404(Department, id=department_id)
+    try:
+        InstitutionDepartmentLink.objects.create(
+            institution=institution, department=department
+        )
+    except IntegrityError:
+        return 400, {"message": "Department already linked to institution"}
+    return 200, {"message": "Department linked to institution"}
+
+@router.post("/link/institution-course/", response={200: Any, 400: Any})
+@role_required(["Institution"])
+def link_institution_department(request, institution_id: str, course_id: str):
+    institution = get_object_or_404(Institution, id=institution_id)
+    course = get_object_or_404(Course, id=course_id)
+    try:
+        InstitutionCourseLink.objects.create(
+            institution=institution, course=course
+        )
+    except IntegrityError:
+        return 400, {"message": "Department already linked to institution"}
+    return 200, {"message": "Department linked to institution"}
 
 @router.get("/education-system/", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
@@ -157,17 +182,20 @@ def get_education_system(request):
     education_system = EducationSystem.objects.all()
     return 200, education_system
 
+
 @router.get("/institution", response={200: List[InstitutionOutSchema]})
 @role_required(["Admin"])
 def get_institution(request):
     institution = Institution.objects.all()
     return 200, institution
 
+
 @router.get("/community", response={200: List[CommunityOutSchema]})
 @role_required(["Admin"])
 def get_community(request):
     community = Community.objects.all()
     return 200, community
+
 
 @router.get("/department", response={200: List[CommunityOutSchema]})
 @role_required(["Admin", "Institution", "Faculty"])
@@ -177,10 +205,9 @@ def get_community(request):
         faculty_instance = Faculty.objects.filter(user_id="123").first()
         department = Department.objects.prefetch_related(
             Prefetch(
-                'faculty_department_link',
+                "faculty_department_link",
                 queryset=FacultyDepartmentLink.objects.filter(faculty=faculty_instance),
-                to_attr='handled_by_faculty'
+                to_attr="handled_by_faculty",
             )
         )
     return 200, department
-
