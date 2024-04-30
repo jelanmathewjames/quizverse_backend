@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 from pathlib import Path
-from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG")
+DEBUG = os.environ.get("DEBUG")
 
-ALLOWED_HOSTS = [ config("WEBSITE_HOSTNAME") ] if config("WEBSITE_HOSTNAME", None) else []
+ALLOWED_HOSTS = [ os.environ.get("WEBSITE_HOSTNAME") ] if os.environ.get("WEBSITE_HOSTNAME", None) else []
 
 
 # Application definition
@@ -73,7 +75,7 @@ TEMPLATES = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    config("FRONTEND_URL"),
+    os.environ.get("FRONTEND_URL"),
 ]
 
 WSGI_APPLICATION = "quizverse_backend.wsgi.application"
@@ -88,7 +90,7 @@ if DEBUG:
         }
     }
 else:
-    connection_string = config("AZURE_POSTGRESQL_CONNECTIONSTRING")
+    connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
     parameters = {pair.split('+'):pair.split('=')[1] for pair in connection_string.split(' ')}
     DATABASES = {
         "default": {
@@ -141,15 +143,15 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-FRONTEND_URL = config("FRONTEND_URL")
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
-PASSWORD_REGEX = config("PASSWORD_REGEX")
+PASSWORD_REGEX = os.environ.get("PASSWORD_REGEX")
 
-JWT_ALGORITHM = config("JWT_ALGORITHM")
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM")
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
