@@ -73,23 +73,32 @@ TEMPLATES = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    config("FRONTEND_URL"),
 ]
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 WSGI_APPLICATION = "quizverse_backend.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
-
+else:
+    connection_string = config("AZURE_POSTGRESQL_CONNECTIONSTRING")
+    parameters = {pair.split('+'):pair.split('=')[1] for pair in connection_string.split(' ')}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": parameters["dbname"],
+            "HOST": parameters["host"],
+            "USER": parameters["user"],
+            "PASSWORD": parameters["password"]
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

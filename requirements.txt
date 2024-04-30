@@ -2,5 +2,6 @@ django-cors-headers==4.3.1
 django-ninja==1.1.0
 email-validator==2.1.0.post1
 pip-chill==1.0.3
+psycopg2-binary==2.9.9
 pyjwt==2.8.0
 python-decouple==3.8
