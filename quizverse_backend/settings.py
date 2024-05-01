@@ -91,14 +91,14 @@ if DEBUG:
     }
 else:
     connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
-    parameters = {pair.split('+'):pair.split('=')[1] for pair in connection_string.split(' ')}
+    parameters = {pair.split('=')[0]:pair.split('=')[1] for pair in connection_string.split(';')}
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": parameters["dbname"],
-            "HOST": parameters["host"],
-            "USER": parameters["user"],
-            "PASSWORD": parameters["password"]
+            "NAME": parameters["Database"],
+            "HOST": parameters["Server"],
+            "USER": parameters["User Id"],
+            "PASSWORD": parameters["Password"]
         }
     }
 
