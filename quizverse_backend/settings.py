@@ -98,7 +98,8 @@ else:
             "NAME": parameters["Database"],
             "HOST": parameters["Server"],
             "USER": parameters["User Id"],
-            "PASSWORD": parameters["Password"]
+            "PASSWORD": parameters["Password"],
+            "PORT": parameters["Port"],
         }
     }
 
