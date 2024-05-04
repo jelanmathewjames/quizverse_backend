@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get("DEBUG") == "True" else False
+DEBUG = True 
 
 ALLOWED_HOSTS = [ os.environ.get("ALLOWED_HOSTNAME") ] if os.environ.get("ALLOWED_HOSTNAME", None) else []
 
@@ -82,26 +82,19 @@ WSGI_APPLICATION = "quizverse_backend.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-if DEBUG:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+
+connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
+parameters = {pair.split('=')[0]:pair.split('=')[1] for pair in connection_string.split(';')}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": parameters["Database"],
+        "HOST": parameters["Server"],
+        "USER": parameters["User Id"],
+        "PASSWORD": parameters["Password"],
+        "PORT": parameters["Port"],
     }
-else:
-    connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
-    parameters = {pair.split('=')[0]:pair.split('=')[1] for pair in connection_string.split(';')}
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": parameters["Database"],
-            "HOST": parameters["Server"],
-            "USER": parameters["User Id"],
-            "PASSWORD": parameters["Password"],
-            "PORT": parameters["Port"],
-        }
-    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
