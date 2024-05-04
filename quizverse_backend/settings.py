@@ -74,9 +74,7 @@ TEMPLATES = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    os.environ.get("FRONTEND_URL"),
-]
+CORS_ALLOWED_ORIGINS = [ url for url in os.environ.get("FRONTEND_URL").split(" ") ]
 
 WSGI_APPLICATION = "quizverse_backend.wsgi.application"
 
