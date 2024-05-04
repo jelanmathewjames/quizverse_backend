@@ -84,7 +84,7 @@ class Token(models.Model):
 class VerificationToken(models.Model):
     TOKEN_TYPES = [("verify", "verify"), ("forgot", "forgot")]
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    token = models.CharField(max_length=40, unique=True)
+    token = models.CharField(max_length=100, unique=True)
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     token_type = models.CharField(max_length=7, choices=TOKEN_TYPES)
     created_at = models.DateTimeField(auto_now_add=True)
