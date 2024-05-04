@@ -87,12 +87,8 @@ connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
 parameters = {pair.split('=')[0]:pair.split('=')[1] for pair in connection_string.split(';')}
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": parameters["Database"],
-        "HOST": parameters["Server"],
-        "USER": parameters["User Id"],
-        "PASSWORD": parameters["Password"],
-        "PORT": parameters["Port"],
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
