@@ -76,7 +76,7 @@ def verify_token(token, type):
         payload = jwt.decode(token, SECRET_KEY, algorithms=JWT_ALGORITHM)
 
         # Extract the user ID from the payload
-        user_id = payload["user_id"]
+        user_id = payload["user"]
 
         # Check if token present in database
         if type == "access":
