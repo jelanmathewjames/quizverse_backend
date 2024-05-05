@@ -2,15 +2,15 @@ from ninja import Router
 from typing import Any
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.db import IntegrityError
 
-from utils.authentication import role_required
+from utils.authentication import role_required, AuthBearer
 from admin.schemas import *
 from users.models import User, Role, UserInstitutionLink, UserCommunityLink
 from admin.models import Institution, Community, EducationSystem
 
-router = Router()
+router = Router(auth=AuthBearer())
 
 
 @router.post("/role/institution/", response={200: Any, 400: Any})
@@ -150,6 +150,27 @@ def create_department(request, name: str):
     department = Department.objects.create(name=name)
     return 200, department
 
+@router.post("/course/", response={200: CourseOutSchema, 400: Any})
+@role_required(["Admin"])
+def create_course(request, data: CourseInSchema):
+    data = data.dict()
+    department = get_object_or_404(Department, id=data.pop("department_id"))
+    get_object_or_404(EducationSystem, id=data["education_system_id"])
+    if Course.objects.filter(Q(name=data["name"]) | Q(code=data["code"])).exists():
+        return 400, {"message": "Course with this name or code already exists"}
+
+    course = Course.objects.create(**data)
+    CourseDepartmentLink.objects.create(course=course, department=department)
+    return 200, course
+
+@router.post("/module/", response={200: ModuleOutSchema, 400: Any})
+@role_required(["Admin"])
+def create_module(request, data: ModuleInSchema):
+    data = data.dict()
+    get_object_or_404(Course, id=data.get("course_id"))
+    module = Module.objects.create(**data)
+    return 200, module
+
 @router.post("/link/institution-department/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def link_institution_department(request, institution_id: str, department_id: str):
@@ -165,7 +186,7 @@ def link_institution_department(request, institution_id: str, department_id: str
 
 @router.post("/link/institution-course/", response={200: Any, 400: Any})
 @role_required(["Institution"])
-def link_institution_department(request, institution_id: str, course_id: str):
+def link_institution_course(request, institution_id: str, course_id: str):
     institution = get_object_or_404(Institution, id=institution_id)
     course = get_object_or_404(Course, id=course_id)
     try:
@@ -173,10 +194,10 @@ def link_institution_department(request, institution_id: str, course_id: str):
             institution=institution, course=course
         )
     except IntegrityError:
-        return 400, {"message": "Department already linked to institution"}
-    return 200, {"message": "Department linked to institution"}
+        return 400, {"message": "Course already linked to institution"}
+    return 200, {"message": "Course linked to institution"}
 
-@router.get("/education-system/", response={200: List[EducationSystemOutSchema]})
+@router.get("/education-system", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
 def get_education_system(request):
     education_system = EducationSystem.objects.all()
@@ -199,10 +220,10 @@ def get_community(request):
 
 @router.get("/department", response={200: List[CommunityOutSchema]})
 @role_required(["Admin", "Institution", "Faculty"])
-def get_community(request):
+def get_department(request):
     department = Department.objects.all()
     if "Faculty" in request.auth.role:
-        faculty_instance = Faculty.objects.filter(user_id="123").first()
+        faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "faculty_department_link",

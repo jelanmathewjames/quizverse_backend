@@ -61,3 +61,30 @@ class DepartmentOutSchema(ModelSchema):
     class Meta:
         model = Department
         fields = "__all__"
+
+class CourseInSchema(ModelSchema):
+    department_id: str
+    education_system_id: str
+    class Meta:
+        model = Course
+        exclude = ["id", "created_at", "updated_at", "education_system"]
+
+class CourseOutSchema(ModelSchema):
+    id: Union[str, uuid.UUID]
+
+    class Meta:
+        model = Course
+        fields = "__all__"
+
+class ModuleInSchema(ModelSchema):
+    course_id: str
+    class Meta:
+        model = Module
+        exclude = ["id", "created_at", "updated_at"]
+
+class ModuleOutSchema(ModelSchema):
+    id: Union[str, uuid.UUID]
+
+    class Meta:
+        model = Module
+        fields = "__all__"

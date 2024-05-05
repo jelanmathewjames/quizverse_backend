@@ -46,9 +46,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -73,9 +73,9 @@ TEMPLATES = [
         },
     },
 ]
-
-CORS_ALLOWED_ORIGINS = [ url for url in os.environ.get("FRONTEND_URL").split(" ") ]
-
+urls = [ url for url in os.environ.get("FRONTEND_URL").split(" ") ]
+CORS_ALLOWED_ORIGINS = urls
+CORS_ALLOW_CREDENTIALS = True
 WSGI_APPLICATION = "quizverse_backend.wsgi.application"
 
 # Database
@@ -93,6 +93,12 @@ DATABASES = {
         "PORT": parameters["Port"],
     }
 }
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
