@@ -122,9 +122,14 @@ def login(request, login: LoginSchema):
         access_token, refresh_token = generate_token(
             user.id, [role.name for role in user.role.all()]
         )
-        Token.objects.create(
-            user_id=user.id, access_token=access_token, refresh_token=refresh_token
-        )
+        if not Token.objects.filter(user_id=user.id).exists():
+            Token.objects.create(
+                user_id=user.id, access_token=access_token, refresh_token=refresh_token
+            )
+        else:
+            Token.objects.filter(user_id=user.id).update(
+                access_token=access_token, refresh_token=refresh_token
+            )
         response = JsonResponse(data={"access_token": access_token}, status=200)
         response.set_cookie("refresh_token", refresh_token, httponly=True)
         return response
