@@ -55,7 +55,7 @@ def get_user(request):
 
 
 @router.get("/users", response={201: List[UserOutSchema]})
-@role_required(["Admin"])
+@role_required(["Admin", "Institution", "Community"])
 def get_users(request):
     users = User.objects.all()
     return 201, users
