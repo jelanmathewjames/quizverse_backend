@@ -166,7 +166,6 @@ def get_access_token(request):
         )
         return 200, {"access_token": access_token}
     except Exception as e:
-        print(e)
         return 400, {
             "message": "Invalid token",
             "code": 400,

@@ -219,10 +219,10 @@ def get_community(request):
 
 
 @router.get("/department", response={200: List[CommunityOutSchema]})
-@role_required(["Admin", "Institution", "Faculty"])
+@role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_department(request):
     department = Department.objects.all()
-    if "Faculty" in request.auth.role:
+    if "Faculty" in request.auth.roles:
         faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
         department = Department.objects.prefetch_related(
             Prefetch(
@@ -231,4 +231,45 @@ def get_department(request):
                 to_attr="handled_by_faculty",
             )
         )
+    if "Student" in request.auth.roles:
+        student_instance = Student.objects.filter(user_id=request.auth.user).first()
+        department = Department.objects.prefetch_related(
+            Prefetch(
+                "student_department_link",
+                queryset=StudentDepartmentLink.objects.filter(student=student_instance),
+                to_attr="department",
+            )
+        )
     return 200, department
+
+@router.get("/course", response={200: Any, 400: Any})
+@role_required(["Admin", "Institution", "Faculty"])
+def get_course(request):
+    course = Course.objects.all()
+    if "Faculty" in request.auth.roles:
+        faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
+        course = Course.objects.prefetch_related(
+            Prefetch(
+                "course_faculty_link",
+                queryset=CourseFacultyLink.objects.filter(faculty=faculty_instance),
+                to_attr="handled_by_faculty"
+            )
+        )
+    if "Student" in request.auth.roles:
+        student_instance = Student.objects.filter(user_id=request.auth.user).first()
+        department = Department.objects.prefetch_related(
+            Prefetch(
+                "student_department_link",
+                queryset=StudentDepartmentLink.objects.filter(student=student_instance),
+                to_attr="department",
+            )
+        )
+        course = Course.objects.prefetch_related(
+            Prefetch(
+                "course_department_link",
+                queryset=CourseDepartmentLink.objects.filter(department=department),
+                to_attr="department"
+            )
+        ).filter(class_or_semester=student_instance.class_or_semester)
+        return course
+    return 200, course
