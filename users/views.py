@@ -131,7 +131,7 @@ def login(request, login: LoginSchema):
                 access_token=access_token, refresh_token=refresh_token
             )
         response = JsonResponse(data={"access_token": access_token}, status=200)
-        response.set_cookie("refresh_token", refresh_token, httponly=True)
+        response.set_cookie("refresh_token", refresh_token, httponly=True, samesite="None", secure=True)
         return response
 
     return 400, {"details": "Invalid credentials"}
