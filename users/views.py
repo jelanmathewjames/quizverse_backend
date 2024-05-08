@@ -159,7 +159,7 @@ def get_access_token(request):
                 "details": {"error": "Token is invalid or expired"},
             }
         user_id = payload["user"]
-        role = payload["role"]
+        role = payload["roles"]
         access_token = generate_access_token(user_id, role)
         Token.objects.filter(user_id=user_id, refresh_token=refresh_token).update(
             access_token=access_token
