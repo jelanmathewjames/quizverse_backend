@@ -48,7 +48,7 @@ def verification_email(email):
 @router.get("/user", response={200: UserOutSchema, 404: Any})
 def get_user(request):
     try:
-        user = User.objects.get(id=request.auth.user)
+        user = User.objects.get(id=request.auth["user"])
         return 200, user
     except User.DoesNotExist:
         return 404, {"details": "User not found"}
@@ -83,7 +83,7 @@ def register(request, user: UserInSchema):
 
 @router.post("/verify/", response={200: Any, 400: Any})
 def send_verification(request):
-    user_id = request.auth.user
+    user_id = request.auth["user"]
     user = User.objects.get(id=user_id)
     if user.is_verified:
         return 400, {"details": "Email already verified"}
@@ -231,12 +231,12 @@ def verify_forgot_otp(request, token: str, new_password: str = Form(None)):
 def get_role_request(request):
     user_institution = list(
         UserInstitutionLink.objects.filter(
-            user_id=request.auth.user, accepted=False
+            user_id=request.auth["user"], accepted=False
         ).values_list("institution__name", "role__name")
     )
     user_community = list(
         UserCommunityLink.objects.filter(
-            user_id=request.auth.user, accepted=False
+            user_id=request.auth["user"], accepted=False
         ).values_list("community__name", "role__name")
     )
     user_institution = [
@@ -254,7 +254,7 @@ def get_role_request(request):
 def accept_role(request, role: str, entity: str, entity_name: str):
     if entity == "Institution":
         user_institution = UserInstitutionLink.objects.get(
-            user_id=request.auth.user,
+            user_id=request.auth["user"],
             institution__name=entity_name,
             role__name=role,
             accepted=False,
@@ -263,7 +263,7 @@ def accept_role(request, role: str, entity: str, entity_name: str):
         user_institution.save()
     elif entity == "Community":
         user_community = UserCommunityLink.objects.get(
-            user_id=request.auth.user,
+            user_id=request.auth["user"],
             community__name=entity_name,
             role__name=role,
             accepted=False,
