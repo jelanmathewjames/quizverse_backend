@@ -222,8 +222,8 @@ def get_community(request):
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_department(request):
     department = Department.objects.all()
-    if "Faculty" in request.auth.roles:
-        faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
+    if "Faculty" in request.auth["roles"]:
+        faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "faculty_department_link",
@@ -231,8 +231,8 @@ def get_department(request):
                 to_attr="handled_by_faculty",
             )
         )
-    if "Student" in request.auth.roles:
-        student_instance = Student.objects.filter(user_id=request.auth.user).first()
+    if "Student" in request.auth["roles"]:
+        student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "student_department_link",
@@ -246,8 +246,8 @@ def get_department(request):
 @role_required(["Admin", "Institution", "Faculty"])
 def get_course(request):
     course = Course.objects.all()
-    if "Faculty" in request.auth.roles:
-        faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
+    if "Faculty" in request.auth["roles"]:
+        faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         course = Course.objects.prefetch_related(
             Prefetch(
                 "course_faculty_link",
@@ -255,8 +255,8 @@ def get_course(request):
                 to_attr="handled_by_faculty"
             )
         )
-    if "Student" in request.auth.roles:
-        student_instance = Student.objects.filter(user_id=request.auth.user).first()
+    if "Student" in request.auth["roles"]:
+        student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "student_department_link",
