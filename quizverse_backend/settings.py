@@ -81,24 +81,24 @@ WSGI_APPLICATION = "quizverse_backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
-parameters = {pair.split('=')[0]:pair.split('=')[1] for pair in connection_string.split(';')}
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": parameters["Database"],
-        "HOST": parameters["Server"],
-        "USER": parameters["User Id"],
-        "PASSWORD": parameters["Password"],
-        "PORT": parameters["Port"],
-    }
-}
+# connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
+# parameters = {pair.split('=')[0]:pair.split('=')[1] for pair in connection_string.split(';')}
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": parameters["Database"],
+#         "HOST": parameters["Server"],
+#         "USER": parameters["User Id"],
+#         "PASSWORD": parameters["Password"],
+#         "PORT": parameters["Port"],
 #     }
 # }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
