@@ -6,6 +6,7 @@ from django.db.models import Prefetch, Q
 from django.db import IntegrityError
 
 from utils.authentication import role_required, AuthBearer
+from utils.utils import search_queryset
 from admin.schemas import *
 from users.models import User, Role, UserInstitutionLink, UserCommunityLink
 from admin.models import Institution, Community, EducationSystem
@@ -199,22 +200,28 @@ def link_institution_course(request, institution_id: str, course_id: str):
 
 @router.get("/education-system", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
-def get_education_system(request):
+def get_education_system(request, search: str = None):
     education_system = EducationSystem.objects.all()
+    if search:
+        education_system = search_queryset(education_system, search, ["name"])
     return 200, education_system
 
 
 @router.get("/institution", response={200: List[InstitutionOutSchema]})
 @role_required(["Admin"])
-def get_institution(request):
+def get_institution(request, search: str = None):
     institution = Institution.objects.all()
+    if search:
+        institution = search_queryset(institution, search, ["name", "place"])
     return 200, institution
 
 
 @router.get("/community", response={200: List[CommunityOutSchema]})
 @role_required(["Admin"])
-def get_community(request):
+def get_community(request, search: str = None):
     community = Community.objects.all()
+    if search:
+        community = search_queryset(community, search, ["name", "level", "community_type"])
     return 200, community
 
 
