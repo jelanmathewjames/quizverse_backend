@@ -132,7 +132,7 @@ def create_institution(request, data: InstitutionInSchema):
 
 @router.post("/community/", response={200: CommunityOutSchema, 400: Any})
 @role_required(["Admin"])
-def create_institution(request, data: CommunityInSchema):
+def create_community(request, data: CommunityInSchema):
     data = data.dict()
     if Community.objects.filter(name=data["name"]).exists():
         return 400, {"message": "Community with this name already exist"}
