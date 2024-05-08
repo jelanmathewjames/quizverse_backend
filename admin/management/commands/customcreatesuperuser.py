@@ -39,9 +39,9 @@ class Command(BaseCommand):
                 user = User.objects.create(
                     username=username,
                     email=email,
-                    password=password,
-                    role=role,
+                    password=password
                 )
+                user.role.add(role)
                 user.save()
                 self.stdout.write("Superuser created successfully")
             except Exception as e:
