@@ -61,7 +61,7 @@ def generate_token(user_id, role):
     refresh_payload = {
         "user": user_id,
         "exp": refresh_exp_time,
-        "role": role,
+        "roles": role,
         "tokenType": "refresh",
     }
     # Generate the token using the secret key
