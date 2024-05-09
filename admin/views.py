@@ -1,4 +1,4 @@
-from ninja import Router
+from ninja import Router, Form
 from typing import Any
 
 from django.shortcuts import get_object_or_404
@@ -111,7 +111,7 @@ def give_community_member_role(request, data: GiveRolesSchema):
 
 @router.post("/education-system/", response={200: EducationSystemOutSchema, 400: Any})
 @role_required(["Admin"])
-def create_education_system(request, name: str):
+def create_education_system(request, name: str = Form(...)):
     if EducationSystem.objects.filter(name=name).exists():
         return 400, {"message": "Education system with this name already exist"}
 
@@ -144,7 +144,7 @@ def create_community(request, data: CommunityInSchema):
 
 @router.post("/department/", response={200: DepartmentOutSchema, 400: Any})
 @role_required(["Admin"])
-def create_department(request, name: str):
+def create_department(request, name: str = Form(...)):
     if Department.objects.filter(name=name).exists():
         return 400, {"message": "Department with this name already exist"}
 
@@ -177,7 +177,9 @@ def create_module(request, data: ModuleInSchema):
 
 @router.post("/link/institution-department/", response={200: Any, 400: Any})
 @role_required(["Institution"])
-def link_institution_department(request, institution_id: str, department_id: str):
+def link_institution_department(
+    request, institution_id: str = Form(...), department_id: str = Form(...)
+):
     institution = get_object_or_404(Institution, id=institution_id)
     department = get_object_or_404(Department, id=department_id)
     try:
@@ -191,7 +193,9 @@ def link_institution_department(request, institution_id: str, department_id: str
 
 @router.post("/link/institution-course/", response={200: Any, 400: Any})
 @role_required(["Institution"])
-def link_institution_course(request, institution_id: str, course_id: str):
+def link_institution_course(
+    request, institution_id: str = Form(...), course_id: str = Form(...)
+):
     institution = get_object_or_404(Institution, id=institution_id)
     course = get_object_or_404(Course, id=course_id)
     try:
