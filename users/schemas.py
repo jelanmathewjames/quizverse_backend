@@ -6,6 +6,16 @@ from typing import Union
 
 from users.models import User
 
+class EmailSchema(Schema):
+    email: EmailStr
+
+class TextSchema(Schema):
+    text_data: str
+
+class AcceptRoleSchema(Schema):
+    role: str
+    entity: str
+    entity_name: str
 
 class UserOutSchema(ModelSchema):
     id: Union[str, uuid.UUID]
