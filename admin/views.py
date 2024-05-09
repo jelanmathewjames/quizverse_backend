@@ -151,6 +151,7 @@ def create_department(request, name: str):
     department = Department.objects.create(name=name)
     return 200, department
 
+
 @router.post("/course/", response={200: CourseOutSchema, 400: Any})
 @role_required(["Admin"])
 def create_course(request, data: CourseInSchema):
@@ -164,6 +165,7 @@ def create_course(request, data: CourseInSchema):
     CourseDepartmentLink.objects.create(course=course, department=department)
     return 200, course
 
+
 @router.post("/module/", response={200: ModuleOutSchema, 400: Any})
 @role_required(["Admin"])
 def create_module(request, data: ModuleInSchema):
@@ -171,6 +173,7 @@ def create_module(request, data: ModuleInSchema):
     get_object_or_404(Course, id=data.get("course_id"))
     module = Module.objects.create(**data)
     return 200, module
+
 
 @router.post("/link/institution-department/", response={200: Any, 400: Any})
 @role_required(["Institution"])
@@ -185,18 +188,18 @@ def link_institution_department(request, institution_id: str, department_id: str
         return 400, {"message": "Department already linked to institution"}
     return 200, {"message": "Department linked to institution"}
 
+
 @router.post("/link/institution-course/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def link_institution_course(request, institution_id: str, course_id: str):
     institution = get_object_or_404(Institution, id=institution_id)
     course = get_object_or_404(Course, id=course_id)
     try:
-        InstitutionCourseLink.objects.create(
-            institution=institution, course=course
-        )
+        InstitutionCourseLink.objects.create(institution=institution, course=course)
     except IntegrityError:
         return 400, {"message": "Course already linked to institution"}
     return 200, {"message": "Course linked to institution"}
+
 
 @router.get("/education-system", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
@@ -221,13 +224,15 @@ def get_institution(request, search: str = None):
 def get_community(request, search: str = None):
     community = Community.objects.all()
     if search:
-        community = search_queryset(community, search, ["name", "level", "community_type"])
+        community = search_queryset(
+            community, search, ["name", "level", "community_type"]
+        )
     return 200, community
 
 
 @router.get("/department", response={200: List[CommunityOutSchema]})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
-def get_department(request):
+def get_department(request, search: str = None):
     department = Department.objects.all()
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
@@ -247,11 +252,14 @@ def get_department(request):
                 to_attr="department",
             )
         )
+    if search:
+        department = search_queryset(department, search, ["name"])
     return 200, department
+
 
 @router.get("/course", response={200: Any, 400: Any})
 @role_required(["Admin", "Institution", "Faculty"])
-def get_course(request):
+def get_course(request, search: str = None):
     course = Course.objects.all()
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
@@ -259,7 +267,7 @@ def get_course(request):
             Prefetch(
                 "course_faculty_link",
                 queryset=CourseFacultyLink.objects.filter(faculty=faculty_instance),
-                to_attr="handled_by_faculty"
+                to_attr="handled_by_faculty",
             )
         )
     if "Student" in request.auth["roles"]:
@@ -275,8 +283,13 @@ def get_course(request):
             Prefetch(
                 "course_department_link",
                 queryset=CourseDepartmentLink.objects.filter(department=department),
-                to_attr="department"
+                to_attr="department",
             )
         ).filter(class_or_semester=student_instance.class_or_semester)
-        return course
+    if search:
+        course = search_queryset(
+            course,
+            search,
+            ["name", "code", "education_system_name", "class_or_semester"],
+        )
     return 200, course

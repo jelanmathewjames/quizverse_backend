@@ -15,6 +15,7 @@ from django.template.loader import get_template
 from users.models import *
 from users.schemas import *
 from quizverse_backend.settings import PASSWORD_REGEX, EMAIL_HOST_USER, FRONTEND_URL
+from utils.utils import search_queryset
 from utils.authentication import (
     AuthBearer,
     role_required,
@@ -56,8 +57,10 @@ def get_user(request):
 
 @router.get("/users", response={201: List[UserOutSchema]})
 @role_required(["Admin", "Institution", "Community"])
-def get_users(request):
+def get_users(request, search: str = None):
     users = User.objects.all()
+    if search:
+        users = search_queryset(users, search, ["username", "email"])
     return 201, users
 
 
