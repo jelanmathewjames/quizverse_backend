@@ -134,7 +134,9 @@ def login(request, login: LoginSchema):
                 access_token=access_token, refresh_token=refresh_token
             )
         response = JsonResponse(data={"access_token": access_token}, status=200)
-        response.set_cookie("refresh_token", refresh_token, httponly=True, samesite="None", secure=True)
+        response.set_cookie(
+            "refresh_token", refresh_token, httponly=True, samesite="None", secure=True
+        )
         return response
 
     return 400, {"details": "Invalid credentials"}
@@ -213,7 +215,7 @@ def forgot_password(request, email: EmailStr = Form(...)):
 
 
 @router.post("/forgot-password/{token}/", auth=None, response={200: Any, 400: Any})
-def verify_forgot_otp(request, token: str, new_password: str = Form(None)):
+def verify_forgot_otp(request, token: str, new_password: str = Form(...)):
     try:
         verification_token = VerificationToken.objects.get(
             token=token, token_type="forgot"
@@ -254,7 +256,12 @@ def get_role_request(request):
 
 
 @router.post("/accept-role/", response={200: Any, 400: Any})
-def accept_role(request, role: str, entity: str, entity_name: str):
+def accept_role(
+    request,
+    role: str = Form(...),
+    entity: str = Form(...),
+    entity_name: str = Form(...),
+):
     if entity == "Institution":
         user_institution = UserInstitutionLink.objects.get(
             user_id=request.auth["user"],
