@@ -5,6 +5,13 @@ from typing import List, Union
 
 from admin.models import *
 
+class NameSchema(Schema):
+    name: str
+
+class InstitutionLink(Schema):
+    institution_id: str
+    link_id: str
+
 class UserMembershipIDSchema(Schema):
     member_id: str
     user_id: str

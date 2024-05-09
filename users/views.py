@@ -2,7 +2,7 @@ import secrets
 import re
 from datetime import datetime, timedelta
 
-from ninja import Router, Form
+from ninja import Router
 from typing import Any, List
 from pydantic import EmailStr
 
@@ -199,15 +199,16 @@ def reset_password(request, payload: ResetPasswordSchema):
 
 
 @router.post("/forgot-password/", auth=None, response={200: Any, 400: Any})
-def forgot_password(request, email: EmailStr = Form(...)):
-    user = User.objects.filter(email=email).first()
+def forgot_password(request, data: EmailSchema):
+    data = data.dict()
+    user = User.objects.filter(email=data.email).first()
     if user:
         token = secrets.token_urlsafe(40)
         VerificationToken.objects.create(user=user, token=token, token_type="forgot")
         subject = "Forgot Password"
         message = f"Your reset password link is {FRONTEND_URL}/reset/{token}. Please reset your password."
         from_email = EMAIL_HOST_USER
-        recipient_list = [email]
+        recipient_list = [data.email]
 
         send_mail(subject, message, from_email, recipient_list)
         return 200, {"message": "Email sent"}
@@ -215,7 +216,8 @@ def forgot_password(request, email: EmailStr = Form(...)):
 
 
 @router.post("/forgot-password/{token}/", auth=None, response={200: Any, 400: Any})
-def verify_forgot_otp(request, token: str, new_password: str = Form(...)):
+def verify_forgot_otp(request, token: str, data: TextSchema):
+    data = data.dict()
     try:
         verification_token = VerificationToken.objects.get(
             token=token, token_type="forgot"
@@ -224,9 +226,9 @@ def verify_forgot_otp(request, token: str, new_password: str = Form(...)):
         return 400, {"details": "Invalid link"}
     if datetime.now() > verification_token.created_at + timedelta(minutes=2):
         return 400, {"details": "Link expired"}
-    if new_password:
+    if data.text_data:
         user = verification_token.user
-        user.password = make_password(new_password)
+        user.password = make_password(data.text_data)
         user.save()
         return 200, {"message": "Password reset successfully"}
     return 200, {"details": "Valid link"}
@@ -258,24 +260,22 @@ def get_role_request(request):
 @router.post("/accept-role/", response={200: Any, 400: Any})
 def accept_role(
     request,
-    role: str = Form(...),
-    entity: str = Form(...),
-    entity_name: str = Form(...),
+    data: AcceptRoleSchema
 ):
-    if entity == "Institution":
+    if data.entity == "Institution":
         user_institution = UserInstitutionLink.objects.get(
             user_id=request.auth["user"],
-            institution__name=entity_name,
-            role__name=role,
+            institution__name=data.entity_name,
+            role__name=data.role,
             accepted=False,
         )
         user_institution.accepted = True
         user_institution.save()
-    elif entity == "Community":
+    elif data.entity == "Community":
         user_community = UserCommunityLink.objects.get(
             user_id=request.auth["user"],
-            community__name=entity_name,
-            role__name=role,
+            community__name=data.entity_name,
+            role__name=data.role,
             accepted=False,
         )
         user_community.accepted = True
