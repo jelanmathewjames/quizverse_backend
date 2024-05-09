@@ -12,7 +12,7 @@ class Institution(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
     name = models.CharField(max_length=100, unique=True)
     place = models.CharField(max_length=100)
-    instituion_type = models.CharField(max_length=7, choices=TYPE_CHOICES)
+    institution_type = models.CharField(max_length=7, choices=TYPE_CHOICES)
     education_system = models.ForeignKey(
         "EducationSystem", on_delete=models.SET_NULL, null=True
     )
