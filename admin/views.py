@@ -113,10 +113,10 @@ def give_community_member_role(request, data: GiveRolesSchema):
 @role_required(["Admin"])
 def create_education_system(request, data: NameSchema):
     data = data.dict()
-    if EducationSystem.objects.filter(name=data.name).exists():
+    if EducationSystem.objects.filter(name=data["name"]).exists():
         return 400, {"message": "Education system with this name already exist"}
 
-    education_system = EducationSystem.objects.create(name=data.name)
+    education_system = EducationSystem.objects.create(name=data["name"])
     return 200, education_system
 
 
@@ -182,8 +182,8 @@ def link_institution_department(
     request, data: InstitutionLink
 ):
     data = data.dict()
-    institution = get_object_or_404(Institution, id=data.institution_id)
-    department = get_object_or_404(Department, id=data.link_id)
+    institution = get_object_or_404(Institution, id=data["institution_id"])
+    department = get_object_or_404(Department, id=data["link_id"])
     try:
         InstitutionDepartmentLink.objects.create(
             institution=institution, department=department
@@ -199,8 +199,8 @@ def link_institution_course(
     request, data: InstitutionLink
 ):
     data = data.dict()
-    institution = get_object_or_404(Institution, id=data.institution_id)
-    course = get_object_or_404(Course, id=data.link_id)
+    institution = get_object_or_404(Institution, id=data["institution_id"])
+    course = get_object_or_404(Course, id=data["link_id"])
     try:
         InstitutionCourseLink.objects.create(institution=institution, course=course)
     except IntegrityError:
@@ -237,7 +237,7 @@ def get_community(request, search: str = None):
     return 200, community
 
 
-@router.get("/department", response={200: List[CommunityOutSchema]})
+@router.get("/department", response={200: List[DepartmentOutSchema]})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_department(request, search: str = None):
     department = Department.objects.all()
