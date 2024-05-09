@@ -6,6 +6,7 @@ from django.db.models import Prefetch, Q
 from django.db import IntegrityError
 
 from utils.authentication import role_required, AuthBearer
+from utils.utils import search_queryset
 from admin.schemas import *
 from users.models import User, Role, UserInstitutionLink, UserCommunityLink
 from admin.models import Institution, Community, EducationSystem
@@ -132,7 +133,7 @@ def create_institution(request, data: InstitutionInSchema):
 
 @router.post("/community/", response={200: CommunityOutSchema, 400: Any})
 @role_required(["Admin"])
-def create_institution(request, data: CommunityInSchema):
+def create_community(request, data: CommunityInSchema):
     data = data.dict()
     if Community.objects.filter(name=data["name"]).exists():
         return 400, {"message": "Community with this name already exist"}
@@ -199,22 +200,28 @@ def link_institution_course(request, institution_id: str, course_id: str):
 
 @router.get("/education-system", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
-def get_education_system(request):
+def get_education_system(request, search: str = None):
     education_system = EducationSystem.objects.all()
+    if search:
+        education_system = search_queryset(education_system, search, ["name"])
     return 200, education_system
 
 
 @router.get("/institution", response={200: List[InstitutionOutSchema]})
 @role_required(["Admin"])
-def get_institution(request):
+def get_institution(request, search: str = None):
     institution = Institution.objects.all()
+    if search:
+        institution = search_queryset(institution, search, ["name", "place"])
     return 200, institution
 
 
 @router.get("/community", response={200: List[CommunityOutSchema]})
 @role_required(["Admin"])
-def get_community(request):
+def get_community(request, search: str = None):
     community = Community.objects.all()
+    if search:
+        community = search_queryset(community, search, ["name", "level", "community_type"])
     return 200, community
 
 
@@ -222,8 +229,8 @@ def get_community(request):
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_department(request):
     department = Department.objects.all()
-    if "Faculty" in request.auth.roles:
-        faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
+    if "Faculty" in request.auth["roles"]:
+        faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "faculty_department_link",
@@ -231,8 +238,8 @@ def get_department(request):
                 to_attr="handled_by_faculty",
             )
         )
-    if "Student" in request.auth.roles:
-        student_instance = Student.objects.filter(user_id=request.auth.user).first()
+    if "Student" in request.auth["roles"]:
+        student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "student_department_link",
@@ -246,8 +253,8 @@ def get_department(request):
 @role_required(["Admin", "Institution", "Faculty"])
 def get_course(request):
     course = Course.objects.all()
-    if "Faculty" in request.auth.roles:
-        faculty_instance = Faculty.objects.filter(user_id=request.auth.user).first()
+    if "Faculty" in request.auth["roles"]:
+        faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         course = Course.objects.prefetch_related(
             Prefetch(
                 "course_faculty_link",
@@ -255,8 +262,8 @@ def get_course(request):
                 to_attr="handled_by_faculty"
             )
         )
-    if "Student" in request.auth.roles:
-        student_instance = Student.objects.filter(user_id=request.auth.user).first()
+    if "Student" in request.auth["roles"]:
+        student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
             Prefetch(
                 "student_department_link",
