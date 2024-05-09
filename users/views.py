@@ -71,16 +71,16 @@ def register(request, user: UserInSchema):
     for field in unique_fields:
         if User.objects.filter(**{field: user_data[field]}).exists():
             return 400, {"details": f"{field} already exists"}
-    if not re.match(PASSWORD_REGEX, user_data["password"]):
-        return 400, {
-            "details": """Password is weak and must contain 
-            at least 8 characters, 1 uppercase, 1 lowercase, 
-            1 number and 1 special character"""
-        }
+    # if not re.match(PASSWORD_REGEX, user_data["password"]):
+    #     return 400, {
+    #         "details": """Password is weak and must contain 
+    #         at least 8 characters, 1 uppercase, 1 lowercase, 
+    #         1 number and 1 special character"""
+    #     }
     user_data["password"] = make_password(user_data["password"])
     user = User.objects.create(**user_data)
-    token = verification_email(user.email)
-    VerificationToken.objects.create(user=user, token=token, token_type="verify")
+    # token = verification_email(user.email)
+    # VerificationToken.objects.create(user=user, token=token, token_type="verify")
     return 201, user
 
 
@@ -201,14 +201,14 @@ def reset_password(request, payload: ResetPasswordSchema):
 @router.post("/forgot-password/", auth=None, response={200: Any, 400: Any})
 def forgot_password(request, data: EmailSchema):
     data = data.dict()
-    user = User.objects.filter(email=data.email).first()
+    user = User.objects.filter(email=data["email"]).first()
     if user:
         token = secrets.token_urlsafe(40)
         VerificationToken.objects.create(user=user, token=token, token_type="forgot")
         subject = "Forgot Password"
         message = f"Your reset password link is {FRONTEND_URL}/reset/{token}. Please reset your password."
         from_email = EMAIL_HOST_USER
-        recipient_list = [data.email]
+        recipient_list = [data["email"]]
 
         send_mail(subject, message, from_email, recipient_list)
         return 200, {"message": "Email sent"}
@@ -226,9 +226,9 @@ def verify_forgot_otp(request, token: str, data: TextSchema):
         return 400, {"details": "Invalid link"}
     if datetime.now() > verification_token.created_at + timedelta(minutes=2):
         return 400, {"details": "Link expired"}
-    if data.text_data:
+    if data["text_data"]:
         user = verification_token.user
-        user.password = make_password(data.text_data)
+        user.password = make_password(data["text_data"])
         user.save()
         return 200, {"message": "Password reset successfully"}
     return 200, {"details": "Valid link"}
@@ -262,20 +262,21 @@ def accept_role(
     request,
     data: AcceptRoleSchema
 ):
-    if data.entity == "Institution":
+    data = data.dict()
+    if data["entity"] == "Institution":
         user_institution = UserInstitutionLink.objects.get(
             user_id=request.auth["user"],
-            institution__name=data.entity_name,
-            role__name=data.role,
+            institution__name=data["entity_name"],
+            role__name=data["role"],
             accepted=False,
         )
         user_institution.accepted = True
         user_institution.save()
-    elif data.entity == "Community":
+    elif data["entity"] == "Community":
         user_community = UserCommunityLink.objects.get(
             user_id=request.auth["user"],
-            community__name=data.entity_name,
-            role__name=data.role,
+            community__name=data["entity_name"],
+            role__name=data["role"],
             accepted=False,
         )
         user_community.accepted = True
