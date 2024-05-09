@@ -115,6 +115,7 @@ class Answer(models.Model):
     answer_number = models.IntegerField(choices=ANSWER_CHOICES)
     answer = models.CharField(max_length=500)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
+    is_correct = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
