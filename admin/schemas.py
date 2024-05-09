@@ -8,6 +8,9 @@ from admin.models import *
 class NameSchema(Schema):
     name: str
 
+class RetrieveSchema(Schema):
+    id: str
+    
 class InstitutionLink(Schema):
     institution_id: str
     link_id: str
