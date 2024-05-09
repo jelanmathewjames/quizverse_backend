@@ -171,7 +171,7 @@ def create_course(request, data: CourseInSchema):
 @role_required(["Admin"])
 def create_module(request, data: ModuleInSchema):
     data = data.dict()
-    get_object_or_404(Course, id=data.get("course_id"))
+    data["course"] = get_object_or_404(Course, id=data.pop("course_id"))
     module = Module.objects.create(**data)
     return 200, module
 
