@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-def search_queryset(queryset, search_fields=None, search_term=None):
+def search_queryset(queryset, search_term=None, search_fields=None):
     """
     Search a queryset using the given search_term and search_fields.
     """
