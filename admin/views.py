@@ -178,9 +178,7 @@ def create_module(request, data: ModuleInSchema):
 
 @router.post("/link/institution-department/", response={200: Any, 400: Any})
 @role_required(["Institution"])
-def link_institution_department(
-    request, data: InstitutionLink
-):
+def link_institution_department(request, data: InstitutionLink):
     data = data.dict()
     institution = get_object_or_404(Institution, id=data["institution_id"])
     department = get_object_or_404(Department, id=data["link_id"])
@@ -195,9 +193,7 @@ def link_institution_department(
 
 @router.post("/link/institution-course/", response={200: Any, 400: Any})
 @role_required(["Institution"])
-def link_institution_course(
-    request, data: InstitutionLink
-):
+def link_institution_course(request, data: InstitutionLink):
     data = data.dict()
     institution = get_object_or_404(Institution, id=data["institution_id"])
     course = get_object_or_404(Course, id=data["link_id"])
@@ -265,7 +261,7 @@ def get_department(request, search: str = None):
 
 
 @router.get("/course", response={200: Any, 400: Any})
-@role_required(["Admin", "Institution", "Faculty"])
+@role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_course(request, search: str = None):
     course = Course.objects.all()
     if "Faculty" in request.auth["roles"]:
@@ -300,3 +296,17 @@ def get_course(request, search: str = None):
             ["name", "code", "education_system_name", "class_or_semester"],
         )
     return 200, course
+
+
+@router.get("/module", response={200: List[ModuleOutSchema], 400: Any})
+@role_required(["Admin", "Institution", "Faculty", "Student"])
+def get_modules(request, id: RetrieveSchema):
+    if not (
+        modules := Module.objects.filter(course_id=id).first().order_by("module_number")
+    ):
+        return 400, {
+            "message": "Invalid course id",
+            "code": 400,
+            "details": {"error": "No course found"},
+        }
+    return 200, modules
