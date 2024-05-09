@@ -24,13 +24,13 @@ def give_institution_role(request, data: GiveRolesSchema):
     institution = get_object_or_404(Institution, id=data.entity_id)
 
     any_institution_admin = User.objects.filter(
-        roles__name="Institution", user_institution_link__instituion__id=data.entity_id
+        role__name="Institution", user_institution_link__institution__id=data.entity_id
     ).exists()
     if any_institution_admin:
         return 400, {"message": "Institution already has an admin"}
 
     role = Role.objects.get(name="Institution")
-    user.roles.add(role)
+    user.role.add(role)
     UserInstitutionLink.objects.create(user=user, institution=institution, role=role)
     return 200, {"message": "Institution role given"}
 
@@ -45,13 +45,13 @@ def give_community_role(request, data: GiveRolesSchema):
     community = get_object_or_404(Community, id=data.entity_id)
 
     any_community_admin = User.objects.filter(
-        roles__name="Community", user_community_link__community__id=data.entity_id
+        role__name="Community", user_community_link__community__id=data.entity_id
     ).exists()
     if any_community_admin:
         return 400, {"message": "Community already has an admin"}
 
     role = Role.objects.get(name="Community")
-    user.roles.add(role)
+    user.role.add(role)
     UserCommunityLink.objects.create(user=user, community=community, role=role)
     return 200, {"message": "Community role given"}
 
