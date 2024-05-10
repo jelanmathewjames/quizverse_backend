@@ -189,7 +189,7 @@ def create_module(request, data: ModuleInSchema):
 def link_institution_department(request, data: InstitutionLink):
     data = data.dict()
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
-    institution = get_object_or_404(Institution, id=user_link.institution__id)
+    institution = get_object_or_404(Institution, id=user_link.institution_id)
     for id in data["link_id"]:
         department = get_object_or_404(Department, id=id)
         try:
@@ -206,7 +206,7 @@ def link_institution_department(request, data: InstitutionLink):
 def link_institution_course(request, data: InstitutionLink):
     data = data.dict()
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
-    institution = get_object_or_404(Institution, id=user_link.institution__id)
+    institution = get_object_or_404(Institution, id=user_link.institution_id)
     for id in data["link_id"]:
         course = get_object_or_404(Course, id=data["link_id"])
         try:
