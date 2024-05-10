@@ -15,7 +15,7 @@ class RetrieveSchema(Schema):
 
 
 class InstitutionLink(Schema):
-    link_id: str
+    link_id: List[str]
 
 
 class UserMembershipIDSchema(Schema):
