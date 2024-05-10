@@ -55,7 +55,7 @@ def get_user(request):
         return 404, {"details": "User not found"}
 
 
-@router.get("/users", response={201: List[UserOutSchema]})
+@router.get("/users", response={200: List[UserOutSchema]})
 @role_required(["Admin", "Institution", "Community"])
 def get_users(request, search: str = None):
     users = User.objects.all()
