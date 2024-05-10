@@ -190,13 +190,14 @@ def link_institution_department(request, data: InstitutionLink):
     data = data.dict()
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
     institution = get_object_or_404(Institution, id=user_link.institution__id)
-    department = get_object_or_404(Department, id=data["link_id"])
-    try:
-        InstitutionDepartmentLink.objects.create(
-            institution=institution, department=department
-        )
-    except IntegrityError:
-        return 400, {"message": "Department already linked to institution"}
+    for id in data["link_id"]:
+        department = get_object_or_404(Department, id=id)
+        try:
+            InstitutionDepartmentLink.objects.create(
+                institution=institution, department=department
+            )
+        except IntegrityError:
+            return 400, {"message": "Department already linked to institution"}
     return 200, {"message": "Department linked to institution"}
 
 
@@ -206,12 +207,13 @@ def link_institution_course(request, data: InstitutionLink):
     data = data.dict()
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
     institution = get_object_or_404(Institution, id=user_link.institution__id)
-    course = get_object_or_404(Course, id=data["link_id"])
-    try:
-        InstitutionCourseLink.objects.create(institution=institution, course=course)
-    except IntegrityError:
-        return 400, {"message": "Course already linked to institution"}
-    return 200, {"message": "Course linked to institution"}
+    for id in data["link_id"]:
+        course = get_object_or_404(Course, id=data["link_id"])
+        try:
+            InstitutionCourseLink.objects.create(institution=institution, course=course)
+        except IntegrityError:
+            return 400, {"message": "Course already linked to institution"}
+        return 200, {"message": "Course linked to institution"}
 
 
 @router.get("/education-system", response={200: List[EducationSystemOutSchema]})
