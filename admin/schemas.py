@@ -15,7 +15,6 @@ class RetrieveSchema(Schema):
 
 
 class InstitutionLink(Schema):
-    institution_id: str
     link_id: str
 
 
