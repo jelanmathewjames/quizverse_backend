@@ -80,7 +80,7 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
 @router.post("/role/student/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def give_student_role(request, data: GiveRolesMembershipSchema):
-    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     role = Role.objects.get(name="Student")
     for datas in data.user_membership_ids:
         departments = Department.objects.filter(id__in=datas.department_ids[0])
@@ -106,7 +106,7 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
 @role_required(["Community"])
 def give_community_member_role(request, data: GiveRolesSchema):
     users = User.objects.filter(id__in=data.user_ids)
-    user_link = get_object_or_404(UserCommunityLink, user__id=request.auth["user_id"])
+    user_link = get_object_or_404(UserCommunityLink, user__id=request.auth["user"])
 
     role = Role.objects.get(name="CommunityMember")
     for user in users:
@@ -188,7 +188,7 @@ def create_module(request, data: ModuleInSchema):
 @role_required(["Institution"])
 def link_institution_department(request, data: InstitutionLink):
     data = data.dict()
-    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     institution = get_object_or_404(Institution, id=user_link.institution__id)
     for id in data["link_id"]:
         department = get_object_or_404(Department, id=id)
@@ -205,7 +205,7 @@ def link_institution_department(request, data: InstitutionLink):
 @role_required(["Institution"])
 def link_institution_course(request, data: InstitutionLink):
     data = data.dict()
-    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     institution = get_object_or_404(Institution, id=user_link.institution__id)
     for id in data["link_id"]:
         course = get_object_or_404(Course, id=data["link_id"])
