@@ -253,9 +253,9 @@ def get_department(request, search: str = None, status: str = None):
             institution_id=institution.id
         ).values_list("department_id", flat=True)
         if status == "linked":
-            department = Course.objects.filter(id__in=department_ids)
+            department = Department.objects.filter(id__in=department_ids)
         elif status == "unlinked":
-            department = Course.objects.exclude(id__in=department_ids)
+            department = Department.objects.exclude(id__in=department_ids)
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
@@ -279,7 +279,7 @@ def get_department(request, search: str = None, status: str = None):
     return 200, department
 
 
-@router.get("/course", response={200: Any, 400: Any})
+@router.get("/course", response={200: CourseOutSchema, 400: Any})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_course(request, search: str = None, status: str = None):
     course = Course.objects.all()
