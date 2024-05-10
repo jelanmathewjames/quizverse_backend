@@ -61,7 +61,7 @@ def get_users(request, search: str = None):
     users = User.objects.all()
     if search:
         users = search_queryset(users, search, ["username", "email"])
-    return 201, users
+    return 200, users
 
 
 @router.post("/register/", auth=None, response={201: UserOutSchema, 400: Any})
