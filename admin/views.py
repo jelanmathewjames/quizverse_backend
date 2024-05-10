@@ -254,7 +254,7 @@ def get_department(request, search: str = None, status: str = None):
             user_id=request.auth["user"]
         ).first()
         department_ids = InstitutionDepartmentLink.objects.filter(
-            institution_id=institution.id
+            institution_id=institution.institution_id
         ).values_list("department_id", flat=True)
         if status == "linked":
             department = Department.objects.filter(id__in=department_ids)
@@ -292,7 +292,7 @@ def get_course(request, search: str = None, status: str = None):
             user_id=request.auth["user"]
         ).first()
         course_ids = InstitutionCourseLink.objects.filter(
-            institution_id=institution.id
+            institution_id=institution.institution_id
         ).values_list("course_id", flat=True)
         if status == "linked":
             course = Course.objects.filter(id__in=course_ids)
