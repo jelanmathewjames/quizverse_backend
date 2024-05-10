@@ -59,16 +59,19 @@ def give_community_role(request, data: GiveRolesSchema):
 @router.post("/role/faculty/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def give_faculty_role(request, data: GiveRolesMembershipSchema):
-    user_link = get_object_or_404(UserInstitutionLink, user_id=request.auth["user"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     role = Role.objects.get(name="Faculty")
     for datas in data.user_membership_id:
-        departments = Department.objects.filter(id__in=datas["department_ids"])
-        user = User.objects.get(id=datas["user_id"])
-        user.roles.add(role)
-        UserInstitutionLink.objects.create(
-            user=user, institution=user_link.institution, role=role
-        )
-        faculty = Faculty.objects.create(facutly_id=datas["member_id"], user=user)
+        departments = Department.objects.filter(id__in=datas.department_ids[0])
+        user = User.objects.get(id=datas.user_id)
+        user.role.add(role)
+        try:
+            UserInstitutionLink.objects.create(
+                user=user, institution=user_link.institution, role=role
+            )
+        except IntegrityError:
+            return 400, {"message": "User already has role in this institution"}
+        faculty = Faculty.objects.create(facutly_id=datas.member_id, user=user)
         for department in departments:
             FacultyDepartmentLink.objects.create(faculty=faculty, department=department)
     return 200, {"message": "Faculty role given"}
@@ -77,19 +80,22 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
 @router.post("/role/student/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def give_student_role(request, data: GiveRolesMembershipSchema):
-    user_link = get_object_or_404(UserInstitutionLink, user_id=request.auth["user_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
     role = Role.objects.get(name="Student")
     for datas in data.user_membership_ids:
-        departments = Department.objects.filter(id__in=datas["department_ids"])
-        user = User.objects.get(id=datas["user_id"])
-        user.roles.add(role)
-        UserInstitutionLink.objects.create(
-            user=user, institution=user_link.institution, role=role
-        )
+        departments = Department.objects.filter(id__in=datas.department_ids[0])
+        user = User.objects.get(id=datas.user_id)
+        user.role.add(role)
+        try:
+            UserInstitutionLink.objects.create(
+                user=user, institution=user_link.institution, role=role
+            )
+        except IntegrityError:
+            return 400, {"message": "User already has role in this institution"}
         student = Student.objects.create(
-            roll_number=datas["member_id"],
+            roll_number=datas.member_id,
             user=user,
-            class_or_semester=data["class_or_semester"],
+            class_or_semester=data.class_or_semester,
         )
         for department in departments:
             StudentDepartmentLink.objects.create(student=student, department=department)
@@ -100,7 +106,7 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
 @role_required(["Community"])
 def give_community_member_role(request, data: GiveRolesSchema):
     users = User.objects.filter(id__in=data.user_ids)
-    user_link = get_object_or_404(UserCommunityLink, user_id=request.auth["user_id"])
+    user_link = get_object_or_404(UserCommunityLink, user__id=request.auth["user_id"])
 
     role = Role.objects.get(name="CommunityMember")
     for user in users:
@@ -304,9 +310,5 @@ def get_modules(request, id: RetrieveSchema):
     if not (
         modules := Module.objects.filter(course_id=id).first().order_by("module_number")
     ):
-        return 400, {
-            "message": "Invalid course id",
-            "code": 400,
-            "details": {"error": "No course found"},
-        }
+        return 400, {"message": "Invalid course id"}
     return 200, modules
