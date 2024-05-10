@@ -279,7 +279,7 @@ def get_department(request, search: str = None, status: str = None):
     return 200, department
 
 
-@router.get("/course", response={200: CourseOutSchema, 400: Any})
+@router.get("/course", response={200: List[CourseOutSchema], 400: Any})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_course(request, search: str = None, status: str = None):
     course = Course.objects.all()
