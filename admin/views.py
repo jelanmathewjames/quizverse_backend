@@ -59,14 +59,14 @@ def give_community_role(request, data: GiveRolesSchema):
 @router.post("/role/faculty/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def give_faculty_role(request, data: GiveRolesMembershipSchema):
-    institution = get_object_or_404(Institution, id=data.entity_id)
+    user_link = get_object_or_404(UserInstitutionLink, user_id=request.auth["user"])
     role = Role.objects.get(name="Faculty")
     for datas in data.user_membership_id:
         departments = Department.objects.filter(id__in=datas["department_ids"])
         user = User.objects.get(id=datas["user_id"])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
-            user=user, institution=institution, role=role
+            user=user, institution=user_link.institution, role=role
         )
         faculty = Faculty.objects.create(facutly_id=datas["member_id"], user=user)
         for department in departments:
@@ -77,14 +77,14 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
 @router.post("/role/student/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def give_student_role(request, data: GiveRolesMembershipSchema):
-    institution = get_object_or_404(Institution, id=data.entity_id)
+    user_link = get_object_or_404(UserInstitutionLink, user_id=request.auth["user_id"])
     role = Role.objects.get(name="Student")
     for datas in data.user_membership_ids:
         departments = Department.objects.filter(id__in=datas["department_ids"])
         user = User.objects.get(id=datas["user_id"])
         user.roles.add(role)
         UserInstitutionLink.objects.create(
-            user=user, institution=institution, role=role
+            user=user, institution=user_link.institution, role=role
         )
         student = Student.objects.create(
             roll_number=datas["member_id"],
@@ -100,12 +100,12 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
 @role_required(["Community"])
 def give_community_member_role(request, data: GiveRolesSchema):
     users = User.objects.filter(id__in=data.user_ids)
-    community = get_object_or_404(Community, id=data.entity_id)
+    user_link = get_object_or_404(UserCommunityLink, user_id=request.auth["user_id"])
 
     role = Role.objects.get(name="CommunityMember")
     for user in users:
         user.roles.add(role)
-        UserCommunityLink.objects.create(user=user, community=community, role=role)
+        UserCommunityLink.objects.create(user=user, community=user_link.community, role=role)
     return 200, {"message": "Community Member role given"}
 
 
