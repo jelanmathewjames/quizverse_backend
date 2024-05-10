@@ -111,7 +111,9 @@ def give_community_member_role(request, data: GiveRolesSchema):
     role = Role.objects.get(name="CommunityMember")
     for user in users:
         user.roles.add(role)
-        UserCommunityLink.objects.create(user=user, community=user_link.community, role=role)
+        UserCommunityLink.objects.create(
+            user=user, community=user_link.community, role=role
+        )
     return 200, {"message": "Community Member role given"}
 
 
@@ -244,14 +246,16 @@ def get_community(request, search: str = None):
 def get_department(request, search: str = None, status: str = None):
     department = Department.objects.all()
     if "Institution" in request.auth["roles"]:
+        institution = UserInstitutionLink.objects.filter(
+            user_id=request.auth["user"]
+        ).first()
+        department_ids = InstitutionDepartmentLink.objects.filter(
+            institution_id=institution.id
+        ).values_list("department_id", flat=True)
         if status == "linked":
-            department = Department.objects.filter(
-                institution_department_link__institution__user_institution_link__user__id=request.auth["user"]
-            )
+            department = Course.objects.filter(id__in=department_ids)
         elif status == "unlinked":
-            department = Department.objects.exclude(
-                institution_department_link__institution__user_institution_link__user__id=request.auth["user"]
-            )
+            department = Course.objects.exclude(id__in=department_ids)
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
@@ -280,14 +284,16 @@ def get_department(request, search: str = None, status: str = None):
 def get_course(request, search: str = None, status: str = None):
     course = Course.objects.all()
     if "Institution" in request.auth["roles"]:
+        institution = UserInstitutionLink.objects.filter(
+            user_id=request.auth["user"]
+        ).first()
+        course_ids = InstitutionCourseLink.objects.filter(
+            institution_id=institution.id
+        ).values_list("course_id", flat=True)
         if status == "linked":
-            course = Course.objects.filter(
-                institution_course_link__institution__user_institution_link__user__id=request.auth["user"]
-            )
+            course = Course.objects.filter(id__in=course_ids)
         elif status == "unlinked":
-            course = Course.objects.exclude(
-                institution_course_link__institution__user_institution_link__user__id=request.auth["user"]
-            )
+            course = Course.objects.exclude(id__in=course_ids)
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         course = Course.objects.prefetch_related(
