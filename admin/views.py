@@ -188,7 +188,8 @@ def create_module(request, data: ModuleInSchema):
 @role_required(["Institution"])
 def link_institution_department(request, data: InstitutionLink):
     data = data.dict()
-    institution = get_object_or_404(Institution, id=data["institution_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
+    institution = get_object_or_404(Institution, id=user_link.institution__id)
     department = get_object_or_404(Department, id=data["link_id"])
     try:
         InstitutionDepartmentLink.objects.create(
@@ -203,7 +204,8 @@ def link_institution_department(request, data: InstitutionLink):
 @role_required(["Institution"])
 def link_institution_course(request, data: InstitutionLink):
     data = data.dict()
-    institution = get_object_or_404(Institution, id=data["institution_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user_id"])
+    institution = get_object_or_404(Institution, id=user_link.institution__id)
     course = get_object_or_404(Course, id=data["link_id"])
     try:
         InstitutionCourseLink.objects.create(institution=institution, course=course)
