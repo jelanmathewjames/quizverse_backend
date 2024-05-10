@@ -241,8 +241,17 @@ def get_community(request, search: str = None):
 
 @router.get("/department", response={200: List[DepartmentOutSchema]})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
-def get_department(request, search: str = None):
+def get_department(request, search: str = None, status: str = None):
     department = Department.objects.all()
+    if "Institution" in request.auth["roles"]:
+        if status == "linked":
+            department = Department.objects.filter(
+                institution_department_link__institution__user_institution_link__user__id=request.auth["user"]
+            )
+        elif status == "unlinked":
+            department = Department.objects.exclude(
+                institution_department_link__institution__user_institution_link__user__id=request.auth["user"]
+            )
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         department = Department.objects.prefetch_related(
@@ -268,8 +277,17 @@ def get_department(request, search: str = None):
 
 @router.get("/course", response={200: Any, 400: Any})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
-def get_course(request, search: str = None):
+def get_course(request, search: str = None, status: str = None):
     course = Course.objects.all()
+    if "Institution" in request.auth["roles"]:
+        if status == "linked":
+            course = Course.objects.filter(
+                institution_course_link__institution__user_institution_link__user__id=request.auth["user"]
+            )
+        elif status == "unlinked":
+            course = Course.objects.exclude(
+                institution_course_link__institution__user_institution_link__user__id=request.auth["user"]
+            )
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
         course = Course.objects.prefetch_related(
