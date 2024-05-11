@@ -49,7 +49,7 @@ class QBankOutSchema(ModelSchema):
         fields = "__all__"
 
 class QuizOrVivaInSchema(ModelSchema):
-
+    qbank_id: str
     class Meta:
         model = QuestionBank
-        exclude = ["id", "creator", "created_at", "updated_at"]
+        exclude = ["id", "conductor", "qbank", "is_private", "created_at", "updated_at"]

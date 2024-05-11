@@ -12,7 +12,7 @@ from utils.authentication import AuthBearer, role_required
 router = Router(auth=AuthBearer())
 
 
-@router.post("/qbank/", response={200: Any, 400: Any})
+@router.post("/qbank/", response={200: QBankOutSchema, 400: Any})
 @role_required(["Faculty"])
 def create_qbank(request, data: QBankInSchema):
     creator_id = request.auth["user"]
@@ -41,7 +41,9 @@ def get_qbank(request):
 @router.get("/question/", response={200: QuestionOutSchema, 400: Any})
 @role_required(["Faculty"])
 def create_question(request, data: QuestionInSchema):
-    qbank = get_object_or_404(QuestionBank, id=data.qbank_id, creator_id=request.auth["user"])
+    qbank = get_object_or_404(
+        QuestionBank, id=data.qbank_id, creator_id=request.auth["user"]
+    )
     module = get_object_or_404(Module, id=data.module_id)
     question = Question.objects.create(
         question=data.question,
@@ -71,8 +73,20 @@ def create_answer(request, data: AnswerInSchema):
     )
     return 200, answer
 
+
 @router.get("/answer", response={200: List[AnswerOutSchema], 400: Any})
 @role_required(["Faculty"])
 def get_answer(request, question_id: str):
     answer = Answer.objects.filter(question_id=question_id).all()
     return 200, answer
+
+
+@router.post("/viva/", response={200: Any, 400: Any})
+@role_required(["Faculty"])
+def create_quiz_or_viva(request, data: QuizOrVivaInSchema):
+    data = data.dict()
+    data["conductor_id"] = request.auth["user"]
+    data["qbank"] = get_object_or_404(QuestionBank, id=data.pop("qbank_id"))
+    data["is_private"] = True
+    quiz_or_viva = QuizOrViva.objects.create(**data)
+    return 200, quiz_or_viva
