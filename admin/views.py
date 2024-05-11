@@ -62,7 +62,7 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     role = Role.objects.get(name="Faculty")
     for datas in data.user_membership_id:
-        departments = Department.objects.filter(id__in=datas.department_ids[0])
+        departments = Department.objects.filter(id=datas.department_ids[0])
         user = User.objects.get(id=datas.user_id)
         user.role.add(role)
         try:
@@ -71,7 +71,7 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
             )
         except IntegrityError:
             return 400, {"message": "User already has role in this institution"}
-        faculty = Faculty.objects.create(facutly_id=datas.member_id, user=user)
+        faculty = Faculty.objects.create(faculty_id=datas.member_id, user=user)
         for department in departments:
             FacultyDepartmentLink.objects.create(faculty=faculty, department=department)
     return 200, {"message": "Faculty role given"}
@@ -83,7 +83,7 @@ def give_student_role(request, data: GiveRolesMembershipSchema):
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     role = Role.objects.get(name="Student")
     for datas in data.user_membership_ids:
-        departments = Department.objects.filter(id__in=datas.department_ids[0])
+        departments = Department.objects.filter(id=datas.department_ids[0])
         user = User.objects.get(id=datas.user_id)
         user.role.add(role)
         try:
