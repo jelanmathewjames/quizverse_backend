@@ -82,7 +82,7 @@ def give_faculty_role(request, data: GiveRolesMembershipSchema):
 def give_student_role(request, data: GiveRolesMembershipSchema):
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     role = Role.objects.get(name="Student")
-    for datas in data.user_membership_ids:
+    for datas in data.user_membership_id:
         departments = Department.objects.filter(id=datas.department_ids[0])
         user = User.objects.get(id=datas.user_id)
         user.role.add(role)
