@@ -53,3 +53,11 @@ class QuizOrVivaInSchema(ModelSchema):
     class Meta:
         model = QuizOrViva
         exclude = ["id", "conductor", "qbank", "is_private", "created_at", "updated_at"]
+    
+class QuizOrVivaOutSchema(ModelSchema):
+    id: Union[str, uuid.UUID]
+
+    class Meta:
+        model = QuizOrViva
+        fields = "__all__"
+

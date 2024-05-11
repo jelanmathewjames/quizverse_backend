@@ -343,7 +343,7 @@ def get_course(request, search: str = None, status: str = None):
 
 @router.get("/module", response={200: List[ModuleOutSchema], 400: Any})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
-def get_modules(request, id: RetrieveSchema):
+def get_modules(request, id: str):
     if not (
         modules := Module.objects.filter(course_id=id).first().order_by("module_number")
     ):
