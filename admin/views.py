@@ -344,11 +344,12 @@ def get_course(request, search: str = None, status: str = None):
 @router.get("/module", response={200: List[ModuleOutSchema], 400: Any})
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_modules(request, id: str):
+    get_object_or_404(Course, id=id)
     if not (
-        modules := Module.objects.filter(course_id=id).first().order_by("module_number")
+        modules := Module.objects.filter(course_id=id).all()
     ):
-        return 400, {"message": "Invalid course id"}
-    return 200, modules
+        return 400, {"message": "No modules found for this course"}
+    return 200, modules.order_by("module_number")
 
 
 @router.get("/faculty", response={200: List[FacultyOutSchema], 400: Any})
