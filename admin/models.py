@@ -182,6 +182,11 @@ class CourseFacultyLink(models.Model):
 
     class Meta:
         db_table = "course_faculty_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course", "faculty"], name="unique_course_faculty_link"
+            )
+        ]
 
 
 class Module(models.Model):
