@@ -215,17 +215,29 @@ def link_institution_course(request, data: InstitutionLink):
             return 400, {"message": "Course already linked to institution"}
         return 200, {"message": "Course linked to institution"}
 
+
 @router.post("/link/faculty-course/", response={200: Any, 400: Any})
 @role_required(["Institution"])
 def link_faculty_course(request, data: FacultyCourseLinkSchema):
     data = data.dict()
-    faculty = get_object_or_404(Faculty, faculty_id=data["faculty_id"])
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
+    institution = get_object_or_404(Institution, id=user_link.institution_id)
+    faculty = get_object_or_404(Faculty, id=data["faculty_id"])
+    if not UserInstitutionLink.objects.filter(
+        user__id=faculty.user.id, institution=institution
+    ).exists():
+        return 400, {"message": "Faculty does not belong to this institution"}
     course = get_object_or_404(Course, id=data["course_id"])
+    if not InstitutionCourseLink.objects.filter(
+        institution=institution, course=course
+    ).exists():
+        return 400, {"message": "Course does not belong to this institution"}
     try:
         CourseFacultyLink.objects.create(faculty=faculty, course=course)
     except IntegrityError:
         return 400, {"message": "Course already linked to faculty"}
     return 200, {"message": "Course linked to faculty"}
+
 
 @router.get("/education-system", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
@@ -337,6 +349,7 @@ def get_modules(request, id: RetrieveSchema):
     ):
         return 400, {"message": "Invalid course id"}
     return 200, modules
+
 
 @router.get("/faculty", response={200: List[FacultyOutSchema], 400: Any})
 @role_required(["Institution"])
