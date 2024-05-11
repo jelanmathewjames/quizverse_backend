@@ -355,7 +355,10 @@ def get_modules(request, id: RetrieveSchema):
 @role_required(["Institution"])
 def get_faculty(request, search: str = None):
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
-    faculty = Faculty.objects.filter(institution=user_link.institution)
+    faculty_user_ids = UserInstitutionLink.objects.filter(
+        institution=user_link.institution, role__name="Faculty"
+    ).values_list("user_id", flat=True)
+    faculty = Faculty.objects.filter(user_id__in=faculty_user_ids)
     if search:
         faculty = search_queryset(faculty, search, ["faculty_id"])
     return 200, faculty
