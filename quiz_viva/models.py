@@ -88,37 +88,24 @@ class Question(models.Model):
     question = models.CharField(max_length=500)
     question_type = models.CharField(max_length=6, choices=TYPE_CHOICES)
     qbank = models.ForeignKey("QuestionBank", on_delete=models.CASCADE)
+    module = models.ForeignKey("admin.Module", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "question"
 
-class QuestionModuleLink(models.Model):
-    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    question = models.ForeignKey("Question", on_delete=models.CASCADE)
-    module = models.ForeignKey("admin.Module", on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = "question_module_link"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["question", "module"], name="unique_question_module"
-            )
-        ]
-
-class Answer(models.Model):
-    ANSWER_CHOICES = [("PLAIN", 0), ("A", 1), ("B", 2), ("C", 3), ("D", 4), ("E", 5)]
+class Options(models.Model):
+    OPTION_CHOICES = [("PLAIN", 0), ("A", 1), ("B", 2), ("C", 3), ("D", 4), ("E", 5)]
 
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    answer_number = models.IntegerField(choices=ANSWER_CHOICES)
-    answer = models.CharField(max_length=500)
+    option_number = models.IntegerField(choices=OPTION_CHOICES)
+    option = models.CharField(max_length=500)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
     is_correct = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "answer"
+        db_table = "options"

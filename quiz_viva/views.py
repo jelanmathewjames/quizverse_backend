@@ -6,7 +6,7 @@ from django.db.models import Prefetch
 
 from quiz_viva.schemas import *
 from quiz_viva.models import *
-from admin.models import Course, Module, CourseDepartmentLink, StudentDepartmentLink, Student
+from admin.models import Course, Module, Student
 from utils.authentication import AuthBearer, role_required
 
 router = Router(auth=AuthBearer())
@@ -41,17 +41,20 @@ def get_qbank(request):
 @router.get("/question/", response={200: QuestionOutSchema, 400: Any})
 @role_required(["Faculty"])
 def create_question(request, data: QuestionInSchema):
+    data = data.dict()
     qbank = get_object_or_404(
         QuestionBank, id=data.qbank_id, creator_id=request.auth["user"]
     )
     module = get_object_or_404(Module, id=data.module_id)
     question = Question.objects.create(
+        question_number=data.question_number,
         question=data.question,
-        options=data.options,
-        correct_option=data.correct_option,
+        question_type=data.question_type,
         qbank=qbank,
+        module=module
     )
-    QuestionModuleLink.objects.create(question=question, module=module)
+    for option in data.options:
+        Options.objects.create(question=question, **option.dict())
     return 200, question
 
 
@@ -64,24 +67,7 @@ def get_question(request, qbank_id: str):
     return 200, question
 
 
-@router.post("/answer/", response={200: AnswerOutSchema, 400: Any})
-@role_required(["Faculty"])
-def create_answer(request, data: AnswerInSchema):
-    question = get_object_or_404(Question, id=data.question_id)
-    answer = Answer.objects.create(
-        question=question, answer=data.answer, is_correct=data.is_correct
-    )
-    return 200, answer
-
-
-@router.get("/answer", response={200: List[AnswerOutSchema], 400: Any})
-@role_required(["Faculty"])
-def get_answer(request, question_id: str):
-    answer = Answer.objects.filter(question_id=question_id).all()
-    return 200, answer
-
-
-@router.post("/viva/", response={200: Any, 400: Any})
+@router.post("/viva/", response={200: QuizOrVivaOutSchema, 400: Any})
 @role_required(["Faculty"])
 def create_quiz_or_viva(request, data: QuizOrVivaInSchema):
     data = data.dict()

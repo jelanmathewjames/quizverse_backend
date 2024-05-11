@@ -3,26 +3,18 @@ import uuid
 from ninja import Schema, ModelSchema
 from typing import List, Union
 
-from quiz_viva.models import QuestionBank, Question, Answer, QuizOrViva
+from quiz_viva.models import QuestionBank, Question, QuizOrViva, Options
 from admin.schemas import CourseOutSchema
 
-class AnswerInSchema(ModelSchema):
-    question_id: str
-    class Meta:
-        model = Answer
-        fields = ["id", "question", "created_at", "updated_at"]
-
-
-class AnswerOutSchema(ModelSchema):
-    id: Union[str, uuid.UUID]
+class OptionInSchema(ModelSchema):
 
     class Meta:
-        model = Answer
-        exclude = ["is_correct"]
+        model = Options
+        exclude = ["id", "question", "created_at", "updated_at"]
     
 class QuestionOutSchema(ModelSchema):
     id: Union[str, uuid.UUID]
-
+    options: List[OptionInSchema] = None
     class Meta:
         model = Question
         fields = "__all__"
@@ -30,10 +22,11 @@ class QuestionOutSchema(ModelSchema):
 class QuestionInSchema(ModelSchema):
     qbank_id: str
     module_id: str
+    options: List[OptionInSchema]
 
     class Meta:
         model = Question
-        exclude = ["id", "qbank", "created_at", "updated_at"]
+        exclude = ["id", "qbank", "module", "created_at", "updated_at"]
 
 class QBankInSchema(Schema):
     title: str
