@@ -208,7 +208,7 @@ def link_institution_course(request, data: InstitutionLink):
     user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
     institution = get_object_or_404(Institution, id=user_link.institution_id)
     for id in data["link_id"]:
-        course = get_object_or_404(Course, id=data["link_id"])
+        course = get_object_or_404(Course, id=id)
         try:
             InstitutionCourseLink.objects.create(institution=institution, course=course)
         except IntegrityError:
