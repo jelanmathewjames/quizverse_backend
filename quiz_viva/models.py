@@ -26,6 +26,10 @@ class StudentQuizOrVivaLink(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
     student = models.ForeignKey("users.User", on_delete=models.CASCADE)
     quiz_or_viva = models.ForeignKey("QuizOrViva", on_delete=models.CASCADE)
+    total_marks = models.IntegerField(default=0)
+    marks_obtained = models.IntegerField(default=0)
+    start_time = models.DateTimeField(null=True)
+    malpractice = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -34,6 +38,22 @@ class StudentQuizOrVivaLink(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["student", "quiz_or_viva"], name="unique_student_quiz_or_viva"
+            )
+        ]
+
+class StudentResponse(models.Model):
+    id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
+    student_quiz_or_viva_link = models.ForeignKey("StudentQuizOrVivaLink", on_delete=models.CASCADE)
+    question = models.ForeignKey("Question", on_delete=models.CASCADE)
+    option = models.ForeignKey("Options", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "student_response"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student_quiz_or_viva_link", "question"], name="unique_student_response"
             )
         ]
 
