@@ -11,6 +11,7 @@ class QuizOrViva(models.Model):
     description = models.CharField(max_length=500)
     viva_or_quiz = models.CharField(max_length=4, choices=TYPE_CHOICES)
     conductor = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    qbank = models.ForeignKey("QuestionBank", on_delete=models.CASCADE)
     is_private = models.BooleanField(default=False)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()

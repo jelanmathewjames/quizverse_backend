@@ -42,9 +42,14 @@ class QBankInSchema(Schema):
 class QBankOutSchema(ModelSchema):
     id: Union[str, uuid.UUID]
     course: CourseOutSchema = None
-    questions: List[QuestionOutSchema]
+    questions: List[QuestionOutSchema] = None
     
     class Meta:
         model = QuestionBank
         fields = "__all__"
 
+class QuizOrVivaInSchema(ModelSchema):
+
+    class Meta:
+        model = QuestionBank
+        exclude = ["id", "creator", "created_at", "updated_at"]
