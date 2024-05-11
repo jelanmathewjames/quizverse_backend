@@ -3,7 +3,7 @@ import uuid
 from ninja import Schema, ModelSchema
 from typing import List, Union
 
-from quiz_viva.models import QuestionBank, Question, Answer
+from quiz_viva.models import QuestionBank, Question, Answer, QuizOrViva
 from admin.schemas import CourseOutSchema
 
 class AnswerInSchema(ModelSchema):
@@ -51,5 +51,5 @@ class QBankOutSchema(ModelSchema):
 class QuizOrVivaInSchema(ModelSchema):
     qbank_id: str
     class Meta:
-        model = QuestionBank
+        model = QuizOrViva
         exclude = ["id", "conductor", "qbank", "is_private", "created_at", "updated_at"]

@@ -215,6 +215,17 @@ def link_institution_course(request, data: InstitutionLink):
             return 400, {"message": "Course already linked to institution"}
         return 200, {"message": "Course linked to institution"}
 
+@router.post("/link/faculty-course/", response={200: Any, 400: Any})
+@role_required(["Institution"])
+def link_faculty_course(request, data: FacultyCourseLinkSchema):
+    data = data.dict()
+    faculty = get_object_or_404(Faculty, faculty_id=data["faculty_id"])
+    course = get_object_or_404(Course, id=data["course_id"])
+    try:
+        CourseFacultyLink.objects.create(faculty=faculty, course=course)
+    except IntegrityError:
+        return 400, {"message": "Course already linked to faculty"}
+    return 200, {"message": "Course linked to faculty"}
 
 @router.get("/education-system", response={200: List[EducationSystemOutSchema]})
 @role_required(["Admin"])
@@ -262,22 +273,16 @@ def get_department(request, search: str = None, status: str = None):
             department = Department.objects.exclude(id__in=department_ids)
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
-        department = Department.objects.prefetch_related(
-            Prefetch(
-                "faculty_department_link",
-                queryset=FacultyDepartmentLink.objects.filter(faculty=faculty_instance),
-                to_attr="handled_by_faculty",
-            )
-        )
+        faculty_department = FacultyDepartmentLink.objects.filter(
+            faculty=faculty_instance
+        ).values_list("department_id", flat=True)
+        department = Department.objects.filter(id__in=faculty_department)
     if "Student" in request.auth["roles"]:
         student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
-        department = Department.objects.prefetch_related(
-            Prefetch(
-                "student_department_link",
-                queryset=StudentDepartmentLink.objects.filter(student=student_instance),
-                to_attr="department",
-            )
-        )
+        student_department = StudentDepartmentLink.objects.filter(
+            student=student_instance
+        ).values_list("department_id", flat=True)
+        department = Department.objects.filter(id__in=student_department)
     if search:
         department = search_queryset(department, search, ["name"])
     return 200, department
@@ -300,29 +305,21 @@ def get_course(request, search: str = None, status: str = None):
             course = Course.objects.exclude(id__in=course_ids)
     if "Faculty" in request.auth["roles"]:
         faculty_instance = Faculty.objects.filter(user_id=request.auth["user"]).first()
-        course = Course.objects.prefetch_related(
-            Prefetch(
-                "course_faculty_link",
-                queryset=CourseFacultyLink.objects.filter(faculty=faculty_instance),
-                to_attr="handled_by_faculty",
-            )
-        )
+        course_link = CourseFacultyLink.objects.filter(
+            faculty=faculty_instance
+        ).values_list("course_id", flat=True)
+        course = Course.objects.filter(id__in=course_link)
     if "Student" in request.auth["roles"]:
         student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
-        department = Department.objects.prefetch_related(
-            Prefetch(
-                "student_department_link",
-                queryset=StudentDepartmentLink.objects.filter(student=student_instance),
-                to_attr="department",
-            )
+        student_department = StudentDepartmentLink.objects.filter(
+            student=student_instance
+        ).values_list("department_id", flat=True)
+        course_link = CourseDepartmentLink.objects.filter(
+            department_id__in=student_department
+        ).values_list("course_id", flat=True)
+        course = Course.objects.filter(
+            class_or_semester=student_instance.class_or_semester, id__in=course_link
         )
-        course = Course.objects.prefetch_related(
-            Prefetch(
-                "course_department_link",
-                queryset=CourseDepartmentLink.objects.filter(department=department),
-                to_attr="department",
-            )
-        ).filter(class_or_semester=student_instance.class_or_semester)
     if search:
         course = search_queryset(
             course,
@@ -340,3 +337,12 @@ def get_modules(request, id: RetrieveSchema):
     ):
         return 400, {"message": "Invalid course id"}
     return 200, modules
+
+@router.get("/faculty", response={200: List[FacultyOutSchema], 400: Any})
+@role_required(["Institution"])
+def get_faculty(request, search: str = None):
+    user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
+    faculty = Faculty.objects.filter(institution=user_link.institution)
+    if search:
+        faculty = search_queryset(faculty, search, ["faculty_id"])
+    return 200, faculty

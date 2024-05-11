@@ -17,6 +17,16 @@ class RetrieveSchema(Schema):
 class InstitutionLink(Schema):
     link_id: List[str]
 
+class FacultyCourseLinkSchema(Schema):
+    course_id: str
+    faculty_id: str
+
+class FacultyOutSchema(ModelSchema):
+    id: Union[str, uuid.UUID]
+
+    class Meta:
+        model = Faculty
+        fields = "__all__"
 
 class UserMembershipIDSchema(Schema):
     member_id: str
@@ -92,7 +102,7 @@ class CourseInSchema(ModelSchema):
 
 class CourseOutSchema(ModelSchema):
     id: Union[str, uuid.UUID]
-
+    handled_by_faculty: List[dict] = None
     class Meta:
         model = Course
         fields = "__all__"
