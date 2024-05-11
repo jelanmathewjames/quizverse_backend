@@ -10,10 +10,6 @@ class NameSchema(Schema):
     name: str
 
 
-class RetrieveSchema(Schema):
-    id: str
-
-
 class InstitutionLink(Schema):
     link_id: List[str]
 
@@ -26,6 +22,13 @@ class FacultyOutSchema(ModelSchema):
 
     class Meta:
         model = Faculty
+        fields = "__all__"
+
+class StudentOutSchema(ModelSchema):
+    id: Union[str, uuid.UUID]
+
+    class Meta:
+        model = Student
         fields = "__all__"
 
 class UserMembershipIDSchema(Schema):

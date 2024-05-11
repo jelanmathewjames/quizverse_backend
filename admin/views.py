@@ -362,3 +362,31 @@ def get_faculty(request, search: str = None):
     if search:
         faculty = search_queryset(faculty, search, ["faculty_id"])
     return 200, faculty
+
+
+@router.get("/student", response={200: List[StudentOutSchema], 400: Any})
+@role_required(["Institution", "Faculty"])
+def get_student(request, course_id: str = None, search: str = None):
+    student = Student.objects.all()
+    if "Institution" in request.auth["roles"]:
+        user_link = get_object_or_404(
+            UserInstitutionLink, user__id=request.auth["user"]
+        )
+        student_user_ids = UserInstitutionLink.objects.filter(
+            institution=user_link.institution, role__name="Student"
+        ).values_list("user_id", flat=True)
+        student = student.filter(user_id__in=student_user_ids)
+    elif "Faculty" in request.auth["roles"]:
+        course = get_object_or_404(Course, id=course_id)
+        department_ids = CourseDepartmentLink.objects.filter(course=course).values_list(
+            "department_id", flat=True
+        )
+        student_user_ids = StudentDepartmentLink.objects.filter(
+            department_id__in=department_ids
+        ).values_list("student__user_id", flat=True)
+        student = student.filter(
+            user_id__in=student_user_ids, class_or_semester=course.class_or_semester
+        )
+    if search:
+        student = search_queryset(student, search, ["roll_number"])
+    return 200, student

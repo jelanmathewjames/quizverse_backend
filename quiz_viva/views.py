@@ -6,7 +6,7 @@ from django.db.models import Prefetch
 
 from quiz_viva.schemas import *
 from quiz_viva.models import *
-from admin.models import Course, Module
+from admin.models import Course, Module, CourseDepartmentLink, StudentDepartmentLink, Student
 from utils.authentication import AuthBearer, role_required
 
 router = Router(auth=AuthBearer())
@@ -89,4 +89,20 @@ def create_quiz_or_viva(request, data: QuizOrVivaInSchema):
     data["qbank"] = get_object_or_404(QuestionBank, id=data.pop("qbank_id"))
     data["is_private"] = True
     quiz_or_viva = QuizOrViva.objects.create(**data)
+    return 200, quiz_or_viva
+
+@router.get("/viva", response={200: List[QuizOrVivaOutSchema], 400: Any})
+@role_required(["Faculty", "Student"])
+def get_viva(request):
+    quiz_or_viva = QuizOrViva.objects.all()
+    if "Faculty" in request.auth["role"]:
+        quiz_or_viva = quiz_or_viva.filter(conductor_id=request.auth["user"])
+    elif "Student" in request.auth["role"]:
+        student = get_object_or_404(Student, user_id=request.auth["user"])
+        quiz_or_viva = quiz_or_viva.filter(
+            studentquizorvivalink__student_id=student.id
+        )
+    quiz_or_viva = QuizOrViva.objects.filter(
+        conductor_id=request.auth["user"]
+    ).all()
     return 200, quiz_or_viva
