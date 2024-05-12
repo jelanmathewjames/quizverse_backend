@@ -81,11 +81,15 @@ def create_quiz_or_viva(request, data: QuizOrVivaInSchema):
 def get_viva(request):
     quiz_or_viva = QuizOrViva.objects.all()
     if "Faculty" in request.auth["roles"]:
-        quiz_or_viva = quiz_or_viva.filter(conductor_id=request.auth["user"])
+        quiz_or_viva = quiz_or_viva.filter(conductor_id=request.auth["user"]).all()
     elif "Student" in request.auth["roles"]:
         student = get_object_or_404(Student, user_id=request.auth["user"])
-        quiz_or_viva = quiz_or_viva.filter(studentquizorvivalink__student_id=student.id)
-    quiz_or_viva = QuizOrViva.objects.filter(conductor_id=request.auth["user"]).all()
+        student_link = (
+            StudentQuizOrVivaLink.objects.filter(student=student)
+            .all()
+            .values_list("quiz_or_viva_id", flat=True)
+        )
+        quiz_or_viva = quiz_or_viva.filter(id__in=student_link).all()
     return 200, quiz_or_viva
 
 
@@ -126,6 +130,7 @@ def get_viva_question(request, quiz_or_viva_id: str):
     questions = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).all()
     return 200, questions
 
+
 @router.get("/viva-options", response={200: List[OptionOutSchema], 400: Any})
 @role_required(["Student"])
 def get_options(request, question_id: str, quiz_or_viva_id: str):
@@ -143,6 +148,7 @@ def get_options(request, question_id: str, quiz_or_viva_id: str):
 
     options = Options.objects.filter(question_id=question_id).all()
     return 200, options
+
 
 @router.post("/response/", response={200: StudentResponseOutSchema, 400: Any})
 @role_required(["Student"])
