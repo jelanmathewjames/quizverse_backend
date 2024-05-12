@@ -322,6 +322,7 @@ def get_course(request, search: str = None, status: str = None):
         ).values_list("course_id", flat=True)
         course = Course.objects.filter(id__in=course_link)
     if "Student" in request.auth["roles"]:
+        user_link = get_object_or_404(UserInstitutionLink, user__id=request.auth["user"])
         student_instance = Student.objects.filter(user_id=request.auth["user"]).first()
         student_department = StudentDepartmentLink.objects.filter(
             student=student_instance
@@ -330,7 +331,8 @@ def get_course(request, search: str = None, status: str = None):
             department_id__in=student_department
         ).values_list("course_id", flat=True)
         course = Course.objects.filter(
-            class_or_semester=student_instance.class_or_semester, id__in=course_link
+            class_or_semester=student_instance.class_or_semester, id__in=course_link,
+            courseinstitutionlink__institution=user_link.institution
         )
     if search:
         course = search_queryset(
@@ -345,9 +347,7 @@ def get_course(request, search: str = None, status: str = None):
 @role_required(["Admin", "Institution", "Faculty", "Student"])
 def get_modules(request, id: str):
     get_object_or_404(Course, id=id)
-    if not (
-        modules := Module.objects.filter(course_id=id).all()
-    ):
+    if not (modules := Module.objects.filter(course_id=id).all()):
         return 400, {"message": "No modules found for this course"}
     return 200, modules.order_by("module_number")
 
@@ -378,7 +378,14 @@ def get_student(request, course_id: str = None, search: str = None):
         ).values_list("user_id", flat=True)
         student = student.filter(user_id__in=student_user_ids)
     elif "Faculty" in request.auth["roles"]:
-        course = get_object_or_404(Course, id=course_id)
+        user_link = get_object_or_404(
+            UserInstitutionLink, user__id=request.auth["user"]
+        )
+        course = get_object_or_404(
+            Course,
+            id=course_id,
+            coursefacultylink__faculty__user_id=request.auth["user"],
+        )
         department_ids = CourseDepartmentLink.objects.filter(course=course).values_list(
             "department_id", flat=True
         )
@@ -386,7 +393,7 @@ def get_student(request, course_id: str = None, search: str = None):
             department_id__in=department_ids
         ).values_list("student__user_id", flat=True)
         student = student.filter(
-            user_id__in=student_user_ids, class_or_semester=course.class_or_semester
+            user_id__in=student_user_ids, class_or_semester=course.class_or_semester,
         )
     if search:
         student = search_queryset(student, search, ["roll_number"])
