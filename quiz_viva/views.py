@@ -67,8 +67,9 @@ def create_quiz_or_viva(request, data: QuizOrVivaInSchema):
     data["conductor_id"] = request.auth["user"]
     data["qbank"] = get_object_or_404(QuestionBank, id=data.pop("qbank_id"))
     data["is_private"] = True
+    student_ids = data.pop("student_id")
     quiz_or_viva = QuizOrViva.objects.create(**data)
-    for student_id in data["student_id"]:
+    for student_id in student_ids:
         student = get_object_or_404(Student, id=student_id)
         StudentQuizOrVivaLink.objects.create(student=student, quiz_or_viva=quiz_or_viva)
     return 200, quiz_or_viva
