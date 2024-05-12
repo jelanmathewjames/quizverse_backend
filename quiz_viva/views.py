@@ -112,6 +112,26 @@ def start_viva(request, quiz_or_viva_id: str):
     return 200, {"message": "Viva started successfully"}
 
 
+@router.get("/remaining-time", response={200: Any, 400: Any})
+@role_required(["Student"])
+def get_remaining_time(request, quiz_or_viva_id: str):
+    student = get_object_or_404(Student, user_id=request.auth["user"])
+    quiz_or_viva = get_object_or_404(QuizOrViva, id=quiz_or_viva_id)
+    student_quiz_or_viva_link = get_object_or_404(
+        StudentQuizOrVivaLink,
+        quiz_or_viva_id=quiz_or_viva_id,
+        student=student,
+    )
+    if student_quiz_or_viva_link.start_time is None:
+        return 400, {"message": "Viva not started"}
+    remaining_time = (
+        student_quiz_or_viva_link.start_time
+        + timedelta(minutes=quiz_or_viva.duration)
+        - timezone.now()
+    )
+    return 200, {"message": remaining_time.total_seconds()}
+
+
 @router.get("/viva-question", response={200: List[QuestionOutSchema], 400: Any})
 @role_required(["Student"])
 def get_viva_question(request, quiz_or_viva_id: str):
@@ -122,11 +142,11 @@ def get_viva_question(request, quiz_or_viva_id: str):
         quiz_or_viva_id=quiz_or_viva_id,
         student=student,
     )
-    if timezone.now() > quiz_or_viva.end_time:
-        return 400, {"message": "Viva is over"}
     if student_quiz_or_viva_link.start_time is None:
         return 400, {"message": "Viva not started"}
-
+    if student_quiz_or_viva_link.start_time + timedelta(quiz_or_viva.duration) < timezone.now():
+        return 400, {"message": "Viva is over"}
+    
     questions = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).all()
     return 200, questions
 
