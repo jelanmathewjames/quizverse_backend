@@ -32,7 +32,7 @@ class QuizOrViva(models.Model):
 
 class StudentQuizOrVivaLink(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    student = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    student = models.ForeignKey("admin.Student", on_delete=models.CASCADE)
     quiz_or_viva = models.ForeignKey("QuizOrViva", on_delete=models.CASCADE)
     total_marks = models.IntegerField(default=0)
     marks_obtained = models.IntegerField(default=0)

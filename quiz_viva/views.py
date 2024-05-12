@@ -52,11 +52,13 @@ def create_question(request, data: List[QuestionInSchema]):
 
 
 @router.get("/question", response={200: List[QuestionOutSchema], 400: Any})
-@role_required(["Faculty"])
-def get_question(request, qbank_id: str):
-    question = Question.objects.filter(
-        qbank_id=qbank_id, qbank__creator_id=request.auth["user"]
-    ).all()
+@role_required(["Faculty", "Student"])
+def get_question(request, qbank_id: str = None):
+    question = Question.objects.all()
+    if "Faculty" in request.auth["role"]:
+        question = Question.objects.filter(
+            qbank_id=qbank_id, qbank__creator_id=request.auth["user"]
+        ).all()
     return 200, question
 
 
@@ -87,6 +89,42 @@ def get_viva(request):
     quiz_or_viva = QuizOrViva.objects.filter(conductor_id=request.auth["user"]).all()
     return 200, quiz_or_viva
 
+@router.get("/start-viva", response={200: Any, 400: Any})
+@role_required(["Student"])
+def start_viva(request, quiz_or_viva_id: str):
+    student = get_object_or_404(Student, user_id=request.auth["user"])
+    quiz_or_viva = get_object_or_404(QuizOrViva, id=quiz_or_viva_id)
+    student_quiz_or_viva_link = get_object_or_404(
+        StudentQuizOrVivaLink,
+        quiz_or_viva_id=quiz_or_viva_id,
+        student=student,
+    )
+    if not (quiz_or_viva.start_time <= timezone.now() < quiz_or_viva.end_time):
+        return 400, {"detail": "Viva is over"}
+    if student_quiz_or_viva_link.start_time is not None:
+        return 400, {"detail": "Viva already started"}
+    student_quiz_or_viva_link.start_time = timezone.now()
+    student_quiz_or_viva_link.save()
+    return 200, {"message": "Viva started successfully"}
+
+
+@router.get("/viva-question", response={200: List[QuestionOutSchema], 400: Any})
+@role_required(["Student"])
+def get_viva_question(request, quiz_or_viva_id: str):
+    student = get_object_or_404(Student, user_id=request.auth["user"])
+    quiz_or_viva = get_object_or_404(QuizOrViva, id=quiz_or_viva_id)
+    student_quiz_or_viva_link = get_object_or_404(
+        StudentQuizOrVivaLink,
+        quiz_or_viva_id=quiz_or_viva_id,
+        student=student,
+    )
+    if timezone.now() > quiz_or_viva.end_time:
+        return 400, {"detail": "Viva is over"}
+    if student_quiz_or_viva_link.start_time is None:
+        return 400, {"detail": "Viva not started"}
+
+    questions = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).all()
+    return 200, questions
 
 @router.post("/response/", response={200: StudentResponseOutSchema, 400: Any})
 @role_required(["Student"])
@@ -107,7 +145,7 @@ def create_response(request, data: StudentResponseInSchema):
         return 400, {"detail": "Malpractice detected you can't submit the response"}
 
     if student_quiz_or_viva_link.start_time is None:
-        student_quiz_or_viva_link.start_time = timezone.now()
+        return 400, {"detail": "Viva not started"}
     else:
         end_time = student_quiz_or_viva_link.start_time + timedelta(
             minutes=quiz_or_viva.duration
@@ -125,3 +163,23 @@ def create_response(request, data: StudentResponseInSchema):
     if option.is_correct:
         student_quiz_or_viva_link.marks_obtained += question.marks
     student_quiz_or_viva_link.save()
+
+    return 200, {"message": "Response submitted successfully"}
+
+@router.get("/viva-result", response={200: VivaResult, 400: Any})
+@role_required(["Student"])
+def get_viva_result(request, quiz_or_viva_id: str):
+    student = get_object_or_404(Student, user_id=request.auth["user"])
+    quiz_or_viva = get_object_or_404(QuizOrViva, id=quiz_or_viva_id)
+    student_quiz_or_viva_link = get_object_or_404(
+        StudentQuizOrVivaLink,
+        quiz_or_viva_id=quiz_or_viva_id,
+        student=student,
+    )
+    if quiz_or_viva.end_time > timezone.now():
+        return 400, {"detail": "Viva is not over yet"}
+    total_mark = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).aggregate(
+        total_marks=models.Count("id")
+    )["total_marks"]
+    marks_obtained = Student
+    return 200, student_quiz_or_viva_link

@@ -94,3 +94,8 @@ class StudentResponseOutSchema(ModelSchema):
     class Meta:
         model = StudentResponse
         fields = "__all__"
+
+class VivaResult(Schema):
+    total_marks: int
+    marks_obtained: int
+    student_id: str
