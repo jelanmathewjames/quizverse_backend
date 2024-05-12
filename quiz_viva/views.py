@@ -197,11 +197,16 @@ def create_response(request, data: StudentResponseInSchema):
 
     question = get_object_or_404(Question, id=data.question_id)
     option = get_object_or_404(Options, id=data.option_id)
-    StudentResponse.objects.update_or_create(
-        student_quiz_or_viva_link=student_quiz_or_viva_link,
-        question=question,
-        option=option,
-    )
+    try:
+        StudentResponse.objects.update_or_create(
+            student_quiz_or_viva_link=student_quiz_or_viva_link,
+            question=question,
+            option=option,
+        )
+    except:
+        StudentResponse.objects.filter(
+            student_quiz_or_viva_link=student_quiz_or_viva_link, question=question
+        ).update(option=option)
     if option.is_correct:
         student_quiz_or_viva_link.marks_obtained += question.marks
     student_quiz_or_viva_link.save()
