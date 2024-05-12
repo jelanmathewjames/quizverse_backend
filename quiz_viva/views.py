@@ -54,7 +54,7 @@ def create_question(request, data: List[QuestionInSchema]):
 @role_required(["Faculty", "Student"])
 def get_question(request, qbank_id: str = None):
     question = Question.objects.all()
-    if "Faculty" in request.auth["role"]:
+    if "Faculty" in request.auth["roles"]:
         question = Question.objects.filter(
             qbank_id=qbank_id, qbank__creator_id=request.auth["user"]
         ).all()
@@ -80,9 +80,9 @@ def create_quiz_or_viva(request, data: QuizOrVivaInSchema):
 @role_required(["Faculty", "Student"])
 def get_viva(request):
     quiz_or_viva = QuizOrViva.objects.all()
-    if "Faculty" in request.auth["role"]:
+    if "Faculty" in request.auth["roles"]:
         quiz_or_viva = quiz_or_viva.filter(conductor_id=request.auth["user"])
-    elif "Student" in request.auth["role"]:
+    elif "Student" in request.auth["roles"]:
         student = get_object_or_404(Student, user_id=request.auth["user"])
         quiz_or_viva = quiz_or_viva.filter(studentquizorvivalink__student_id=student.id)
     quiz_or_viva = QuizOrViva.objects.filter(conductor_id=request.auth["user"]).all()
