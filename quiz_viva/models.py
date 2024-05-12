@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-
+from django.utils import timezone
 
 # Create your models here
 class QuizOrViva(models.Model):
@@ -21,6 +21,15 @@ class QuizOrViva(models.Model):
 
     class Meta:
         db_table = "quiz_or_viva"
+    
+    @property
+    def status(self):
+        if self.start_time <= timezone.now() < self.end_time:
+            return "ONGOING"
+        elif self.start_time > timezone.now():
+            return "UPCOMING"
+        else:
+            return "COMPLETED"
 
 class StudentQuizOrVivaLink(models.Model):
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
