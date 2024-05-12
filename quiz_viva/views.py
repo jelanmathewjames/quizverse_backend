@@ -104,9 +104,9 @@ def start_viva(request, quiz_or_viva_id: str):
         student=student,
     )
     if not (quiz_or_viva.start_time <= timezone.now() < quiz_or_viva.end_time):
-        return 400, {"detail": "Viva is over"}
+        return 400, {"message": "Viva is over or not started yet"}
     if student_quiz_or_viva_link.start_time is not None:
-        return 400, {"detail": "Viva already started"}
+        return 400, {"message": "Viva already started"}
     student_quiz_or_viva_link.start_time = timezone.now()
     student_quiz_or_viva_link.save()
     return 200, {"message": "Viva started successfully"}
@@ -123,9 +123,9 @@ def get_viva_question(request, quiz_or_viva_id: str):
         student=student,
     )
     if timezone.now() > quiz_or_viva.end_time:
-        return 400, {"detail": "Viva is over"}
+        return 400, {"message": "Viva is over"}
     if student_quiz_or_viva_link.start_time is None:
-        return 400, {"detail": "Viva not started"}
+        return 400, {"message": "Viva not started"}
 
     questions = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).all()
     return 200, questions
@@ -142,9 +142,9 @@ def get_options(request, question_id: str, quiz_or_viva_id: str):
         student=student,
     )
     if timezone.now() > quiz_or_viva.end_time:
-        return 400, {"detail": "Viva is over"}
+        return 400, {"message": "Viva is over"}
     if student_quiz_or_viva_link.start_time is None:
-        return 400, {"detail": "Viva not started"}
+        return 400, {"message": "Viva not started"}
 
     options = Options.objects.filter(question_id=question_id).all()
     return 200, options
@@ -156,7 +156,7 @@ def create_response(request, data: StudentResponseInSchema):
     user_link = get_object_or_404(Student, user_id=request.auth["user"])
     quiz_or_viva = get_object_or_404(QuizOrViva, id=data.quiz_or_viva_id)
     if not (quiz_or_viva.start_time <= timezone.now() < quiz_or_viva.end_time):
-        return 400, {"detail": "Viva is over"}
+        return 400, {"message": "Viva is over"}
 
     student_quiz_or_viva_link = get_object_or_404(
         StudentQuizOrVivaLink,
@@ -166,16 +166,16 @@ def create_response(request, data: StudentResponseInSchema):
     if student_quiz_or_viva_link.malpractice or data.malpractice:
         student_quiz_or_viva_link.malpractice = True
         student_quiz_or_viva_link.save()
-        return 400, {"detail": "Malpractice detected you can't submit the response"}
+        return 400, {"message": "Malpractice detected you can't submit the response"}
 
     if student_quiz_or_viva_link.start_time is None:
-        return 400, {"detail": "Viva not started"}
+        return 400, {"message": "Viva not started"}
     else:
         end_time = student_quiz_or_viva_link.start_time + timedelta(
             minutes=quiz_or_viva.duration
         )
         if timezone.now() > end_time:
-            return 400, {"detail": "Time over"}
+            return 400, {"message": "Time over"}
 
     question = get_object_or_404(Question, id=data.question_id)
     option = get_object_or_404(Options, id=data.option_id)
@@ -205,7 +205,7 @@ def get_viva_result(request, quiz_or_viva_id: str):
         student_quiz_or_viva_link.start_time + timedelta(minutes=quiz_or_viva.duration)
         > timezone.now()
     ):
-        return 400, {"detail": "Viva is not over yet"}
+        return 400, {"message": "Viva is not over yet"}
     total_mark = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).aggregate(
         total_marks=models.Count("id")
     )["total_marks"]
