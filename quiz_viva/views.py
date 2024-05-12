@@ -159,10 +159,10 @@ def get_options(request, question_id: str, quiz_or_viva_id: str):
         quiz_or_viva_id=quiz_or_viva_id,
         student=student,
     )
-    if timezone.now() > quiz_or_viva.end_time:
-        return 400, {"message": "Viva is over"}
     if student_quiz_or_viva_link.start_time is None:
         return 400, {"message": "Viva not started"}
+    if student_quiz_or_viva_link.start_time + timedelta(quiz_or_viva.duration) < timezone.now():
+        return 400, {"message": "Viva is over"}
 
     options = Options.objects.filter(question_id=question_id).all()
     return 200, options
