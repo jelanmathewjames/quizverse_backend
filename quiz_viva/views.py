@@ -51,13 +51,11 @@ def create_question(request, data: List[QuestionInSchema]):
 
 
 @router.get("/question", response={200: List[QuestionOutSchema], 400: Any})
-@role_required(["Faculty", "Student"])
-def get_question(request, qbank_id: str = None):
-    question = Question.objects.all()
-    if "Faculty" in request.auth["roles"]:
-        question = Question.objects.filter(
-            qbank_id=qbank_id, qbank__creator_id=request.auth["user"]
-        ).all()
+@role_required(["Faculty"])
+def get_question(request, qbank_id: str):
+    question = Question.objects.filter(
+        qbank_id=qbank_id, qbank__creator_id=request.auth["user"]
+    ).all()
     return 200, question
 
 
