@@ -117,10 +117,10 @@ class Question(models.Model):
 
 
 class Options(models.Model):
-    OPTION_CHOICES = [("PLAIN", 0), ("A", 1), ("B", 2), ("C", 3), ("D", 4), ("E", 5)]
+    OPTION_CHOICES = [("PLAIN", 0), ("A", "A"), ("B", "B"), ("C", "C"), ("D", "D"), ("E", "E")]
 
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
-    option_number = models.IntegerField(choices=OPTION_CHOICES)
+    option_number = models.CharField(max_length=5, choices=OPTION_CHOICES)
     option = models.CharField(max_length=500)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
     is_correct = models.BooleanField(default=False)

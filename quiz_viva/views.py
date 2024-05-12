@@ -40,24 +40,24 @@ def get_qbank(request):
     return 200, question_bank
 
 
-@router.post("/question/", response={200: QuestionOutSchema, 400: Any})
+@router.post("/question/", response={200: Any, 400: Any})
 @role_required(["Faculty"])
-def create_question(request, data: QuestionInSchema):
-    data = data.dict()
-    qbank = get_object_or_404(
-        QuestionBank, id=data.qbank_id, creator_id=request.auth["user"]
-    )
-    module = get_object_or_404(Module, id=data.module_id)
-    question = Question.objects.create(
-        question_number=data.question_number,
-        question=data.question,
-        question_type=data.question_type,
-        qbank=qbank,
-        module=module,
-    )
-    for option in data.options:
-        Options.objects.create(question=question, **option.dict())
-    return 200, question
+def create_question(request, data: List[QuestionInSchema]):
+    for question in data:   
+        qbank = get_object_or_404(
+            QuestionBank, id=question.qbank_id, creator_id=request.auth["user"]
+        )
+        module = get_object_or_404(Module, id=question.module_id)
+        question_data = Question.objects.create(
+            question_number=question.question_number,
+            question=question.question,
+            question_type=question.question_type,
+            qbank=qbank,
+            module=module,
+        )
+        for option in question.options:
+            Options.objects.create(question=question_data, **option.dict())
+    return 200, {"message": "Questions created successfully"}
 
 
 @router.get("/question", response={200: List[QuestionOutSchema], 400: Any})
