@@ -40,7 +40,7 @@ def get_qbank(request):
     return 200, question_bank
 
 
-@router.get("/question/", response={200: QuestionOutSchema, 400: Any})
+@router.post("/question/", response={200: QuestionOutSchema, 400: Any})
 @role_required(["Faculty"])
 def create_question(request, data: QuestionInSchema):
     data = data.dict()
