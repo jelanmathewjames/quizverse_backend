@@ -27,23 +27,14 @@ def create_qbank(request, data: QBankInSchema):
 @router.get("/qbank", response={200: List[QBankOutSchema], 400: Any})
 @role_required(["Faculty"])
 def get_qbank(request):
-    question_bank = QuestionBank.objects.filter(
-        creator_id=request.auth["user"]
-    ).prefetch_related(
-        Prefetch(
-            "qbank_course_link",
-            queryset=QBankCourseLink.objects.all(),
-            to_attr="course",
-        ),
-        Prefetch("question", queryset=Question.objects.all(), to_attr="questions"),
-    )
+    question_bank = QuestionBank.objects.filter(creator_id=request.auth["user"])
     return 200, question_bank
 
 
 @router.post("/question/", response={200: Any, 400: Any})
 @role_required(["Faculty"])
 def create_question(request, data: List[QuestionInSchema]):
-    for question in data:   
+    for question in data:
         qbank = get_object_or_404(
             QuestionBank, id=question.qbank_id, creator_id=request.auth["user"]
         )
@@ -113,7 +104,7 @@ def create_response(request, data: StudentResponseInSchema):
         student_quiz_or_viva_link.malpractice = True
         student_quiz_or_viva_link.save()
         return 400, {"detail": "Malpractice detected you can't submit the response"}
-    
+
     if student_quiz_or_viva_link.start_time is None:
         student_quiz_or_viva_link.start_time = timezone.now()
     else:
