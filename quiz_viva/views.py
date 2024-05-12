@@ -179,7 +179,10 @@ def get_viva_result(request, quiz_or_viva_id: str):
         quiz_or_viva_id=quiz_or_viva_id,
         student=student,
     )
-    if quiz_or_viva.end_time > timezone.now():
+    if (
+        student_quiz_or_viva_link.start_time + timedelta(minutes=quiz_or_viva.duration)
+        > timezone.now()
+    ):
         return 400, {"detail": "Viva is not over yet"}
     total_mark = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).aggregate(
         total_marks=models.Count("id")
