@@ -168,7 +168,7 @@ def get_options(request, question_id: str, quiz_or_viva_id: str):
     return 200, options
 
 
-@router.post("/response/", response={200: StudentResponseOutSchema, 400: Any})
+@router.post("/response/", response={200: Any, 400: Any})
 @role_required(["Student"])
 def create_response(request, data: StudentResponseInSchema):
     user_link = get_object_or_404(Student, user_id=request.auth["user"])
