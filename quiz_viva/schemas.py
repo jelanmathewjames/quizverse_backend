@@ -20,6 +20,14 @@ class OptionInSchema(ModelSchema):
         exclude = ["id", "question", "created_at", "updated_at"]
 
 
+class OptionOutSchema(ModelSchema):
+    id: Union[str, uuid.UUID]
+
+    class Meta:
+        model = Options
+        exclude = ["is_correct"]
+
+
 class QuestionOutSchema(ModelSchema):
     id: Union[str, uuid.UUID]
     options: List[OptionInSchema] = None
@@ -76,6 +84,7 @@ class StudentResponseInSchema(ModelSchema):
     question_id: str
     option_id: str
     malpractice: bool
+
     class Meta:
         model = StudentResponse
         exclude = [
@@ -94,6 +103,7 @@ class StudentResponseOutSchema(ModelSchema):
     class Meta:
         model = StudentResponse
         fields = "__all__"
+
 
 class VivaResult(Schema):
     total_marks: int

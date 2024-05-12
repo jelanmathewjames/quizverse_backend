@@ -3,7 +3,6 @@ from typing import Any
 from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
 from django.utils import timezone
 
 from quiz_viva.schemas import *
@@ -127,6 +126,23 @@ def get_viva_question(request, quiz_or_viva_id: str):
     questions = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).all()
     return 200, questions
 
+@router.get("/viva-options", response={200: List[OptionOutSchema], 400: Any})
+@role_required(["Student"])
+def get_options(request, question_id: str, quiz_or_viva_id: str):
+    student = get_object_or_404(Student, user_id=request.auth["user"])
+    quiz_or_viva = get_object_or_404(QuizOrViva, id=quiz_or_viva_id)
+    student_quiz_or_viva_link = get_object_or_404(
+        StudentQuizOrVivaLink,
+        quiz_or_viva_id=quiz_or_viva_id,
+        student=student,
+    )
+    if timezone.now() > quiz_or_viva.end_time:
+        return 400, {"detail": "Viva is over"}
+    if student_quiz_or_viva_link.start_time is None:
+        return 400, {"detail": "Viva not started"}
+
+    options = Options.objects.filter(question_id=question_id).all()
+    return 200, options
 
 @router.post("/response/", response={200: StudentResponseOutSchema, 400: Any})
 @role_required(["Student"])
@@ -157,7 +173,7 @@ def create_response(request, data: StudentResponseInSchema):
 
     question = get_object_or_404(Question, id=data.question_id)
     option = get_object_or_404(Options, id=data.option_id)
-    StudentResponse.objects.create(
+    StudentResponse.objects.update_or_create(
         student_quiz_or_viva_link=student_quiz_or_viva_link,
         question=question,
         option=option,
@@ -187,13 +203,8 @@ def get_viva_result(request, quiz_or_viva_id: str):
     total_mark = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).aggregate(
         total_marks=models.Count("id")
     )["total_marks"]
-    marks_obtained = StudentResponse.objects.filter(
-        student_quiz_or_viva_link=student_quiz_or_viva_link,
-        student=student,
-        option__is_correct=True,
-    ).aggregate(total_marks=models.Count("id"))["total_marks"]
     return 200, {
         "total_marks": total_mark,
-        "marks_obtained": marks_obtained,
+        "marks_obtained": student_quiz_or_viva_link.marks_obtained,
         "student_id": student.id,
     }
