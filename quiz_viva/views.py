@@ -89,6 +89,7 @@ def get_viva(request):
     quiz_or_viva = QuizOrViva.objects.filter(conductor_id=request.auth["user"]).all()
     return 200, quiz_or_viva
 
+
 @router.get("/start-viva", response={200: Any, 400: Any})
 @role_required(["Student"])
 def start_viva(request, quiz_or_viva_id: str):
@@ -125,6 +126,7 @@ def get_viva_question(request, quiz_or_viva_id: str):
 
     questions = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).all()
     return 200, questions
+
 
 @router.post("/response/", response={200: StudentResponseOutSchema, 400: Any})
 @role_required(["Student"])
@@ -166,6 +168,7 @@ def create_response(request, data: StudentResponseInSchema):
 
     return 200, {"message": "Response submitted successfully"}
 
+
 @router.get("/viva-result", response={200: VivaResult, 400: Any})
 @role_required(["Student"])
 def get_viva_result(request, quiz_or_viva_id: str):
@@ -181,5 +184,13 @@ def get_viva_result(request, quiz_or_viva_id: str):
     total_mark = Question.objects.filter(qbank_id=quiz_or_viva.qbank_id).aggregate(
         total_marks=models.Count("id")
     )["total_marks"]
-    marks_obtained = Student
-    return 200, student_quiz_or_viva_link
+    marks_obtained = StudentResponse.objects.filter(
+        student_quiz_or_viva_link=student_quiz_or_viva_link,
+        student=student,
+        option__is_correct=True,
+    ).aggregate(total_marks=models.Count("id"))["total_marks"]
+    return 200, {
+        "total_marks": total_mark,
+        "marks_obtained": marks_obtained,
+        "student_id": student.id,
+    }
