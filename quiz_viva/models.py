@@ -8,7 +8,6 @@ class QuizOrViva(models.Model):
 
     id = models.CharField(primary_key=True, max_length=36, default=uuid.uuid4)
     title = models.CharField(max_length=100)
-    description = models.CharField(max_length=500)
     viva_or_quiz = models.CharField(max_length=4, choices=TYPE_CHOICES)
     conductor = models.ForeignKey("users.User", on_delete=models.CASCADE)
     qbank = models.ForeignKey("QuestionBank", on_delete=models.CASCADE)
