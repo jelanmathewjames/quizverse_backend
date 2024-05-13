@@ -384,7 +384,7 @@ def get_student(request, course_id: str = None, search: str = None):
         course = get_object_or_404(
             Course,
             id=course_id,
-            coursefacultylink__faculty__user_id=request.auth["user"],
+            coursefacultylink__faculty__user_id=request.auth["user"]
         )
         department_ids = CourseDepartmentLink.objects.filter(course=course).values_list(
             "department_id", flat=True
@@ -392,8 +392,11 @@ def get_student(request, course_id: str = None, search: str = None):
         student_user_ids = StudentDepartmentLink.objects.filter(
             department_id__in=department_ids
         ).values_list("student__user_id", flat=True)
+        student_ids = UserInstitutionLink.objects.filter(
+            user_id__in=student_user_ids, institution=user_link.institution
+        ).values_list("user_id", flat=True)
         student = student.filter(
-            user_id__in=student_user_ids, class_or_semester=course.class_or_semester,
+            user_id__in=student_ids, class_or_semester=course.class_or_semester,
         )
     if search:
         student = search_queryset(student, search, ["roll_number"])
