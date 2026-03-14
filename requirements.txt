@@ -3,5 +3,5 @@ django-ninja==1.1.0
 email-validator==2.1.0.post1
 pip-chill==1.0.3
 psycopg2-binary==2.9.9
-pyjwt==2.8.0
+pyjwt==2.12.0
 python-dotenv==1.0.1
